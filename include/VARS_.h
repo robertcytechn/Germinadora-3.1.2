@@ -42,6 +42,7 @@ float humedades[3];
 float tempPromedio = 0;
 float humPromedio = 0;
 float temperaturaMax = 0;
+float humedadMax = 0;
 
 int potenciadeluces = 0;
 int potenciaVentiladorexterno = 0;
