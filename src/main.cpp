@@ -12,6 +12,7 @@
 #include <SENSORES_.h>
 #include <CONTROL_LUCES_.h>
 #include <CONTROL_VENTILACION_.h>
+#include <CONTROL_TEMPERATURA_.h>
 
 // =================================================================
 //  OBJETOS GLOBALES

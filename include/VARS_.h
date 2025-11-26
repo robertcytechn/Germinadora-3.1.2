@@ -23,7 +23,7 @@ int finDia = 21;
 int duracionAmanecer = 90;
 
 // Tiempos
-const unsigned long TIEMPO_LECTURA_DHT = 2000;
+const unsigned long TIEMPO_LECTURA_DHT = 5000;
 const unsigned long TIEMPO_ACTUALIZACION_PANTALLA = 1000;
 
 const unsigned long T_VENT_INT_ON = 3 * 60000UL;
@@ -65,6 +65,7 @@ int estadoVentExt = 0;
 
 unsigned long inicioCalefaccion = 0;
 const unsigned long MAX_TIEMPO_CALEFACCION = 5 * 60000UL;
+const unsigned long TIEMPO_MINIMO_APAGADO_CALEFACCION = 10 * 60000UL;
 
 // Alarmas
 bool alarmaActiva = false;
