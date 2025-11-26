@@ -14,7 +14,7 @@
 
 // === ACTUADORES PWM ===
 #define VENTILADOR_PIN 5                // pin del ventilador externo (PWM)
-#define LUCES_PIN 6                     // pin de las luces blancas para simular la luz del sol (PWM)
+#define LUCES_BLANCAS_PIN 6                     // pin de las luces blancas para simular la luz del sol (PWM)
 #define VENTINTER_PIN 8                 // pin de la ventilación interna (PWM)
 
 // === ACTUADORES DIGITALES ===

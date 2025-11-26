@@ -10,6 +10,7 @@
 #include <VARS_.h>
 
 #include <SENSORES_.h>
+#include <CONTROL_LUCES_.h>
 
 // =================================================================
 //  OBJETOS GLOBALES
@@ -28,4 +29,5 @@ void setup() {
 
 void loop() {
     //leerTemperaturaHumedad();
+    //controlLuces();
 }
