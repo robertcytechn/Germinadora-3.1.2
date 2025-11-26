@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <DHT.h>
+
 #include <VARS_.h>
 #include <PINS_.h>
 
