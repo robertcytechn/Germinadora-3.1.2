@@ -1,3 +1,5 @@
+#ifndef VARS__H
+#define VARS__H
 // =================================================================
 //  DEFINICIÓN DE VARIABLES GLOBALES
 // =================================================================
@@ -62,3 +64,5 @@ const unsigned long MAX_TIEMPO_CALEFACCION = 5 * 60000UL;
 // Alarmas
 bool alarmaActiva = false;
 int codigoAlarma = 0;
+
+#endif // VARS__H

@@ -1,3 +1,11 @@
+#ifndef PINS__H
+#define PINS__H
+
+// =================================================================
+//  DEFINICIÓN DE PINES
+// =================================================================
+
+
 // [] = [nombre del dispositivo] [numero del pin]
 // === SENSORES ===
 #define DHT_SUPERIOR_PIN 2              //[dht11] superior
@@ -28,3 +36,5 @@
 #define BTN_UP_PIN 26                   // pin del botón Arriba del menú
 #define BTN_DOWN_PIN 27                 // pin del botón Abajo del menú
 
+
+#endif // PINS__H
