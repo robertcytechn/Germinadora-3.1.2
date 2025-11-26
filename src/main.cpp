@@ -58,7 +58,8 @@ void setup() {
 }
 
 void loop() {
-    //leerTemperaturaHumedad();
-    //controlLuces();
+    leerTemperaturaHumedad();
+    controlLuces();
     controlVentilacion();
+    controlCalefaccion();
 }
