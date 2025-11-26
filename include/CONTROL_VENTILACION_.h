@@ -3,13 +3,16 @@
 
 
 #include <Arduino.h>
-
+#include <RTClib.h>
 #include <VARS_.h>
 #include <PINS_.h>
 
 // =================================================================
 //  CONTROL DE VENTILACIÓN (Interna y Externa)
 // =================================================================
+
+extern RTC_DS1307 reloj;
+
 
 /**
  * @brief Controla el ventilador de entrada de aire a la cámara
@@ -67,6 +70,11 @@ void controlVentilacion(){
     
     // *** Ventilación normal: Ciclo basal/ráfaga/descanso ***
     unsigned long tiempoTranscurrido = tiempoActual - inicioCicloExt;
+    // solo si es de dia
+    DateTime ahora = reloj.now();
+    int horaActual = ahora.hour();
+    bool esDia = (horaActual >= initDia && horaActual < finDia);
+    if (!esDia) return;
     
     switch (estadoVentExt) {
         case 0: // Estado inicial / Ventilación basal

@@ -37,4 +37,7 @@
 #define BTN_DOWN_PIN 27                 // pin del botón Abajo del menú
 
 
+// ======= PUSH BUTTONS TEST PERIFERICOS =======
+#define BTN_FREE_TEST_PIN 28          // pin del botón para testear periféricos todos
+
 #endif // PINS__H
