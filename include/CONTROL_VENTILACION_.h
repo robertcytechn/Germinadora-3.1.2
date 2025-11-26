@@ -45,21 +45,20 @@ void controlVentilacion(){
 
     // ventilacion Interna (ciclo on/off) - si la resistencia esta encendida se activa la ventilación interna sin conteo, si está apagada se sigue el ciclo
     if(estatusResistencia){
-        analogWrite(VENTINTER_PIN, 255); // Ventilación interna al máximo
+        analogWrite(VENTINTER_PIN, PWM_INT_VENT_MAX); // Ventilación interna al máximo
         ventInternoActivo = true;
     } else {
-        unsigned long tiempoActual = millis();
         if (ventInternoActivo) {
             // Actualmente encendida, verificar si debe apagarse
             if (tiempoActual - ultimaVentInterno >= T_VENT_INT_ON) {
-                analogWrite(VENTINTER_PIN, 0); // Apagar ventilación interna
+                analogWrite(VENTINTER_PIN, PWM_INT_VENT_MIN); // Apagar ventilación interna
                 ventInternoActivo = false;
                 ultimaVentInterno = tiempoActual;
             }
         } else {
             // Actualmente apagada, verificar si debe encenderse
             if (tiempoActual - ultimaVentInterno >= T_VENT_INT_OFF) {
-                analogWrite(VENTINTER_PIN, 128); // Encender ventilación interna a potencia media
+                analogWrite(VENTINTER_PIN, PWM_INT_VENT_MED); // Encender ventilación interna a potencia media
                 ventInternoActivo = true;
                 ultimaVentInterno = tiempoActual;
             }

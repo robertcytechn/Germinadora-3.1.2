@@ -38,6 +38,11 @@ const int PWM_EXT_BASAL = 20;
 const int PWM_EXT_RAFAGA = 255;
 const int PWM_EXT_OFF = 0;
 
+const int PWM_INT_VENT_MAX = 255;
+const int PWM_INT_VENT_MED = 128;
+const int PWM_INT_VENT_MIN = 0;
+
+
 // Variables de estado
 float temperaturas[3];
 float humedades[3];
