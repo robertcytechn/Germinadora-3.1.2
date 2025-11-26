@@ -8,14 +8,14 @@
 float tempDia = 25.0;
 float tempNoche = 15.0;
 float tempHisteresis = 1.0;
-float tempMaxSeguridad = 30.0;
+float tempMaxSeguridad = 28.0;
 float tempMinSeguridad = 10.0;
 
 // Configuración de humedad
 float humObjetivo = 75.0;
 float humHisteresis = 5.0;
 float humMaxSeguridad = 95.0;
-float humMinSeguridad = 35.0;
+float humMinSeguridad = 55.0;
 
 // Configuración de iluminación
 int initDia = 7;
@@ -29,9 +29,9 @@ const unsigned long TIEMPO_ACTUALIZACION_PANTALLA = 1000;
 const unsigned long T_VENT_INT_ON = 3 * 60000UL;
 const unsigned long T_VENT_INT_OFF = 12 * 60000UL;
 
-const unsigned long T_EXT_BASAL = 30 * 60000UL;
-const unsigned long T_EXT_RAFAGA = 5 * 60000UL;
-const unsigned long T_EXT_DESCANSO = 25 * 60000UL;
+const unsigned long T_EXT_BASAL = 30 * 60000UL;    // 30 minutos de ventilación externa basal
+const unsigned long T_EXT_RAFAGA = 5 * 60000UL;   // 5 minutos de ventilación externa en ráfaga
+const unsigned long T_EXT_DESCANSO = 25 * 60000UL; // 25 minutos de descanso entre ciclos de ventilación externa
 
 // PWM
 const int PWM_EXT_BASAL = 20;
