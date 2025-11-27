@@ -13,6 +13,7 @@
 #include <CONTROL_LUCES_.h>
 #include <CONTROL_VENTILACION_.h>
 #include <CONTROL_TEMPERATURA_.h>
+#include <MOSTRAR_PANTALLA_.h>
 
 // =================================================================
 //  OBJETOS GLOBALES
@@ -53,6 +54,7 @@ void setup() {
     pinMode(BTN_ENTER_PIN, INPUT_PULLUP);
     pinMode(BTN_UP_PIN, INPUT_PULLUP);
     pinMode(BTN_DOWN_PIN, INPUT_PULLUP);
+    pinMode(BTN_FREE_TEST_PIN, INPUT_PULLUP);
 
 
 }
@@ -62,4 +64,5 @@ void loop() {
     controlLuces();
     controlVentilacion();
     controlCalefaccion();
+    mostrarPantalla();
 }
