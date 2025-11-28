@@ -14,6 +14,10 @@
 extern RTC_DS1307 reloj;
 
 void controlLuces(){
+    static int ultimaPotenciaLuces = -1;
+    static bool ultimoEstadoLucesRojas = false;
+    static unsigned long ultimoCambioLucesRojas = 0;
+    
     DateTime ahora = reloj.now();
     int minutosActuales = ahora.hour() * 60 + ahora.minute();
     int minutosInicio = initDia * 60;
@@ -36,18 +40,31 @@ void controlLuces(){
     } else {
         potenciadeluces = 0; // Noche
     }
-    analogWrite(LUCES_BLANCAS_PIN, potenciadeluces);
+    
+    // Solo escribir si hay cambio en la potencia
+    if (potenciadeluces != ultimaPotenciaLuces) {
+        analogWrite(LUCES_BLANCAS_PIN, potenciadeluces);
+        ultimaPotenciaLuces = potenciadeluces;
+    }
 
 
     // 2. Control LEDs Rojos (Espectro rojo para fotosíntesis)
     // Se encienden despues de la duracionAmanecer y se apagan antes de la duracionAmanecer
     // Esto da un periodo de luz roja más corto pero intenso
+    bool nuevoEstadoRojas = false;
     if (minutosActuales >= (minutosInicio + duracionAmanecer) && minutosActuales <= (minutosFin - duracionAmanecer)) {
-        digitalWrite(LEDS_ROJOS_PIN, HIGH);
-        lucesRojasOn = true;
-    } else {
-        digitalWrite(LEDS_ROJOS_PIN, LOW);
-        lucesRojasOn = false;
+        nuevoEstadoRojas = true;
+    }
+    
+    // Solo escribir si hay cambio en el estado y ha pasado el tiempo de debouncing
+    if (nuevoEstadoRojas != ultimoEstadoLucesRojas) {
+        unsigned long tiempoActual = millis();
+        if (tiempoActual - ultimoCambioLucesRojas > 2000) { // Debounce de 2 segundos
+            digitalWrite(LEDS_ROJOS_PIN, nuevoEstadoRojas ? HIGH : LOW);
+            lucesRojasOn = nuevoEstadoRojas;
+            ultimoEstadoLucesRojas = nuevoEstadoRojas;
+            ultimoCambioLucesRojas = tiempoActual;
+        }
     }
 }
 

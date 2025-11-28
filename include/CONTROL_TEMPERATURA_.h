@@ -24,8 +24,12 @@ extern RTC_DS1307 reloj;
 void controlCalefaccion(){
     static unsigned long ultimoApagado = 0;
     static bool enDescansoForzado = false;
+    static unsigned long ultimoCambioEstado = 0;
     
     unsigned long tiempoActual = millis();
+    
+    // PROTECCIÓN: Evitar cambios de estado demasiado rápidos (debouncing)
+    const unsigned long TIEMPO_MIN_ENTRE_CAMBIOS = 2000; // 2 segundos mínimo entre cambios
     
     // Determinar si es día o noche según el reloj
     DateTime ahora = reloj.now();
@@ -41,11 +45,13 @@ void controlCalefaccion(){
         
         // Si excede el tiempo máximo, apagar y forzar descanso
         if (tiempoEncendido >= MAX_TIEMPO_CALEFACCION) {
-            digitalWrite(CALEFACTORA_PIN, LOW);
-            estatusResistencia = false;
-            ultimoApagado = tiempoActual;
-            enDescansoForzado = true;
-            return;
+            if (estatusResistencia && (tiempoActual - ultimoCambioEstado >= TIEMPO_MIN_ENTRE_CAMBIOS)) {
+                digitalWrite(CALEFACTORA_PIN, LOW);
+                estatusResistencia = false;
+                ultimoApagado = tiempoActual;
+                enDescansoForzado = true;
+                ultimoCambioEstado = tiempoActual;
+            }
         }
     }
     
@@ -55,8 +61,11 @@ void controlCalefaccion(){
         
         // Mantener apagada durante el descanso mínimo
         if (tiempoDescanso < TIEMPO_MINIMO_APAGADO_CALEFACCION) {
-            digitalWrite(CALEFACTORA_PIN, LOW);
-            estatusResistencia = false;
+            if (estatusResistencia) { // Si por alguna razón estuviera encendida, apagarla.
+                digitalWrite(CALEFACTORA_PIN, LOW);
+                estatusResistencia = false;
+                ultimoCambioEstado = tiempoActual; // Registrar el cambio
+            }
             return;
         } else {
             enDescansoForzado = false; // Descanso completado
@@ -64,25 +73,36 @@ void controlCalefaccion(){
     }
     
     // *** 3. Control por temperatura objetivo ***
+    bool nuevoEstado = estatusResistencia;
     
     // Si temperatura supera objetivo + histéresis → APAGAR
     if (tempPromedio >= (tempObjetivo + tempHisteresis)) {
-        if (estatusResistencia) {
-            digitalWrite(CALEFACTORA_PIN, LOW);
-            estatusResistencia = false;
-            ultimoApagado = tiempoActual;
-        }
+        nuevoEstado = false;
     }
     // Si temperatura está por debajo del objetivo - histéresis → ENCENDER
     else if (tempPromedio < (tempObjetivo - tempHisteresis)) {
-        if (!estatusResistencia && !enDescansoForzado) {
-            digitalWrite(CALEFACTORA_PIN, HIGH);
-            estatusResistencia = true;
-            inicioCalefaccion = tiempoActual;
+        if (!enDescansoForzado && !estatusResistencia) { // Solo intentar encender si está apagada
+            nuevoEstado = true;
         }
     }
     // Si está dentro del rango de histéresis, mantener estado actual
-    // (no hacer nada, evita oscilaciones)
+    // (no cambiar nuevoEstado)
+    
+    // *** 4. Aplicar cambio de estado SOLO si hay cambio real y ha pasado tiempo suficiente ***
+    if (nuevoEstado != estatusResistencia && (tiempoActual - ultimoCambioEstado >= TIEMPO_MIN_ENTRE_CAMBIOS)) {
+        estatusResistencia = nuevoEstado;
+        ultimoCambioEstado = tiempoActual;
+
+        if (estatusResistencia) {
+            // ENCENDER
+            digitalWrite(CALEFACTORA_PIN, HIGH);
+            inicioCalefaccion = tiempoActual;
+        } else {
+            // APAGAR
+            digitalWrite(CALEFACTORA_PIN, LOW);
+            ultimoApagado = tiempoActual;
+        }
+    }
 }
 
 #endif // CONTROL_TEMPERATURA__H

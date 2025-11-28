@@ -30,9 +30,10 @@ void leerTemperaturaHumedad(){
 
     float t1 = dhtSuperior.readTemperature();
     float h1 = dhtSuperior.readHumidity();
-    float t2 = dhtInferior.readTemperature();
 
+    float t2 = dhtInferior.readTemperature();
     float h2 = dhtInferior.readHumidity();
+    
     float t3 = dhtPuerta.readTemperature();
     float h3 = dhtPuerta.readHumidity();
 

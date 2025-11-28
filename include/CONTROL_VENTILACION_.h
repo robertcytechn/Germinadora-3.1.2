@@ -30,8 +30,10 @@ void controlVentilacion(){
     // *** PRIORITARIO: Control por temperatura máxima de seguridad ***
     if (temperaturaMax > tempMaxSeguridad) {
         // Temperatura crítica: activar ventilador al 100%
-        analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
-        potenciaVentiladorexterno = PWM_EXT_RAFAGA;
+        if (potenciaVentiladorexterno != PWM_EXT_RAFAGA) {
+            analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
+            potenciaVentiladorexterno = PWM_EXT_RAFAGA;
+        }
         ventExternoForzado = true;
         ventExternoApagadoPorHumedad = false;
         return;
@@ -39,8 +41,10 @@ void controlVentilacion(){
     // Aplicar histéresis para temperatura
     else if (ventExternoForzado && temperaturaMax > (tempMaxSeguridad - tempHisteresis)) {
         // Mantener al 100% hasta que baje por debajo del umbral con histéresis
-        analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
-        potenciaVentiladorexterno = PWM_EXT_RAFAGA;
+        if (potenciaVentiladorexterno != PWM_EXT_RAFAGA) {
+            analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
+            potenciaVentiladorexterno = PWM_EXT_RAFAGA;
+        }
         return;
     } 
     else {
@@ -50,8 +54,10 @@ void controlVentilacion(){
     // *** Control por humedad mínima de seguridad ***
     if (humPromedio < humMinSeguridad) {
         // Humedad muy baja: apagar ventilación externa
-        analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
-        potenciaVentiladorexterno = PWM_EXT_OFF;
+        if (potenciaVentiladorexterno != PWM_EXT_OFF) {
+            analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
+            potenciaVentiladorexterno = PWM_EXT_OFF;
+        }
         ventExternoApagadoPorHumedad = true;
         estadoVentExt = 0; // Reiniciar estado del ciclo
         inicioCicloExt = tiempoActual;
@@ -60,8 +66,10 @@ void controlVentilacion(){
     // Aplicar histéresis para humedad
     else if (ventExternoApagadoPorHumedad && humPromedio < (humMinSeguridad + humHisteresis)) {
         // Mantener apagado hasta que suba por encima del umbral con histéresis
-        analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
-        potenciaVentiladorexterno = PWM_EXT_OFF;
+        if (potenciaVentiladorexterno != PWM_EXT_OFF) {
+            analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
+            potenciaVentiladorexterno = PWM_EXT_OFF;
+        }
         return;
     } 
     else {
@@ -78,8 +86,10 @@ void controlVentilacion(){
     
     switch (estadoVentExt) {
         case 0: // Estado inicial / Ventilación basal
-            analogWrite(VENTILADOR_PIN, PWM_EXT_BASAL);
-            potenciaVentiladorexterno = PWM_EXT_BASAL;
+            if (potenciaVentiladorexterno != PWM_EXT_BASAL) {
+                analogWrite(VENTILADOR_PIN, PWM_EXT_BASAL);
+                potenciaVentiladorexterno = PWM_EXT_BASAL;
+            }
             if (tiempoTranscurrido >= T_EXT_BASAL) {
                 estadoVentExt = 1; // Pasar a ráfaga
                 inicioCicloExt = tiempoActual;
@@ -87,8 +97,10 @@ void controlVentilacion(){
             break;
             
         case 1: // Ráfaga de ventilación
-            analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
-            potenciaVentiladorexterno = PWM_EXT_RAFAGA;
+            if (potenciaVentiladorexterno != PWM_EXT_RAFAGA) {
+                analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
+                potenciaVentiladorexterno = PWM_EXT_RAFAGA;
+            }
             if (tiempoTranscurrido >= T_EXT_RAFAGA) {
                 estadoVentExt = 2; // Pasar a descanso
                 inicioCicloExt = tiempoActual;
@@ -96,8 +108,10 @@ void controlVentilacion(){
             break;
             
         case 2: // Descanso (ventilador apagado)
-            analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
-            potenciaVentiladorexterno = PWM_EXT_OFF;
+            if (potenciaVentiladorexterno != PWM_EXT_OFF) {
+                analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
+                potenciaVentiladorexterno = PWM_EXT_OFF;
+            }
             if (tiempoTranscurrido >= T_EXT_DESCANSO) {
                 estadoVentExt = 0; // Volver a ventilación basal
                 inicioCicloExt = tiempoActual;
@@ -113,23 +127,39 @@ void controlVentilacion(){
     // *** VENTILACIÓN INTERNA ***
     // Si la resistencia está encendida se activa la ventilación interna sin conteo
     // Si está apagada se sigue el ciclo on/off
-    if(estatusResistencia){
-        analogWrite(VENTINTER_PIN, PWM_INT_VENT_MAX); // Ventilación interna al máximo
+    const unsigned long TIEMPO_MIN_ENTRE_CAMBIOS_VENT_INT = 2000; // 2 segundos
+    static int ultimaPotenciaVentInterno = -1;
+    static unsigned long ultimoCambioVentInterno = 0;
+    
+    if (estatusResistencia) {
+        if (ultimaPotenciaVentInterno != PWM_INT_VENT_MAX && (tiempoActual - ultimoCambioVentInterno > TIEMPO_MIN_ENTRE_CAMBIOS_VENT_INT)) {
+            analogWrite(VENTINTER_PIN, PWM_INT_VENT_MAX); // Ventilación interna al máximo
+            ultimaPotenciaVentInterno = PWM_INT_VENT_MAX;
+            ultimoCambioVentInterno = tiempoActual;
+        }
         ventInternoActivo = true;
     } else {
         if (ventInternoActivo) {
             // Actualmente encendida, verificar si debe apagarse
             if (tiempoActual - ultimaVentInterno >= T_VENT_INT_ON) {
-                analogWrite(VENTINTER_PIN, PWM_INT_VENT_MIN); // Apagar ventilación interna
-                ventInternoActivo = false;
-                ultimaVentInterno = tiempoActual;
+                if (ultimaPotenciaVentInterno != PWM_INT_VENT_MIN && (tiempoActual - ultimoCambioVentInterno > TIEMPO_MIN_ENTRE_CAMBIOS_VENT_INT)) {
+                    analogWrite(VENTINTER_PIN, PWM_INT_VENT_MIN); // Apagar ventilación interna
+                    ultimaPotenciaVentInterno = PWM_INT_VENT_MIN;
+                    ultimoCambioVentInterno = tiempoActual;
+                    ultimaVentInterno = tiempoActual; // Reiniciar temporizador de ciclo
+                    ventInternoActivo = false;
+                }
             }
         } else {
             // Actualmente apagada, verificar si debe encenderse
             if (tiempoActual - ultimaVentInterno >= T_VENT_INT_OFF) {
-                analogWrite(VENTINTER_PIN, PWM_INT_VENT_MED); // Encender ventilación interna a potencia media
-                ventInternoActivo = true;
-                ultimaVentInterno = tiempoActual;
+                if (ultimaPotenciaVentInterno != PWM_INT_VENT_MED && (tiempoActual - ultimoCambioVentInterno > TIEMPO_MIN_ENTRE_CAMBIOS_VENT_INT)) {
+                    analogWrite(VENTINTER_PIN, PWM_INT_VENT_MED); // Encender ventilación interna a potencia media
+                    ultimaPotenciaVentInterno = PWM_INT_VENT_MED;
+                    ultimoCambioVentInterno = tiempoActual;
+                    ultimaVentInterno = tiempoActual; // Reiniciar temporizador de ciclo
+                    ventInternoActivo = true;
+                }
             }
         }
     }

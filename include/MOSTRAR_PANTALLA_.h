@@ -89,14 +89,18 @@ void mostrarPantalla() {
     display.print(temperaturas[0], 0);
     display.print("C ");
     display.print(humedades[0], 0);
-    display.print("%");
+    display.print("% TDia:");
+    display.print(tempDia, 1);
+    display.print("C");
     
     display.setCursor(0, 42);
     display.print("S2:");
     display.print(temperaturas[1], 0);
     display.print("C ");
     display.print(humedades[1], 0);
-    display.print("%");
+    display.print("% TNoc:");
+    display.print(tempNoche, 1);
+    display.print("C");
     
     // ===== LÍNEA 10: SEPARADOR =====
     display.drawLine(0, 51, 128, 51, SSD1306_WHITE);

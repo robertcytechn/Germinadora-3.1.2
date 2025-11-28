@@ -34,7 +34,7 @@ const unsigned long T_EXT_RAFAGA = 5 * 60000UL;   // 5 minutos de ventilación e
 const unsigned long T_EXT_DESCANSO = 25 * 60000UL; // 25 minutos de descanso entre ciclos de ventilación externa
 
 // PWM
-const int PWM_EXT_BASAL = 20;
+const int PWM_EXT_BASAL = 25;
 const int PWM_EXT_RAFAGA = 255;
 const int PWM_EXT_OFF = 0;
 
