@@ -5,17 +5,11 @@
 #include <RTClib.h>
 
 #include <PINS_.h>
+#include <VARS_.h>
 
 // =================================================================
 //  CONTROL DE ILUMINACIÓN (Blanca + Roja)
 // =================================================================
-// Configuración de iluminación
-int initDia = 7 * 60; // inicio del cilo del dia en minutos (7:00 AM)
-int finDia = 21 * 60; // fin del ciclo del dia en minutos (9:00 PM)
-int duracionAmanecer = 90; // duración del amanecer/atardecer en minutos
-int potenciadeluces = 0;
-unsigned long tiempoReaccion = 1 * 60000UL; // tiempo de reaccion de las luces en milisegundos (1 minuto)
-unsigned long ultimoCambio = 0;
 
 extern RTC_DS1307 reloj;
 

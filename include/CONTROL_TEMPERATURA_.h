@@ -11,18 +11,6 @@
 //  CONTROL DE TEMPERATURA (Calefacción)
 // =================================================================
 
-// Configuración de temperatura
-float tempDia = 25.0;
-float tempNoche = 15.0;
-float tempHisteresis = 1.0;
-float tempMaxSeguridad = 28.0;
-float tempMinSeguridad = 10.0;
-bool estatusResistencia = false;
-
-const unsigned long TIEMPO_ENCENDIDO_CALEFACCION = 5 * 60000UL; // 5 minutos de encendido continuo
-const unsigned long TIEMPO_APAGADO_CALEFACCION = 10 * 60000UL; // 10 minutos de descanso
-unsigned long tiempoUltimoCambioCalefaccion = 0;
-
 extern RTC_DS1307 reloj;
 
 void controlCalefaccion(){
@@ -30,7 +18,7 @@ void controlCalefaccion(){
 
     // Determinar la temperatura objetivo según si es de día o de noche
     int minutosActuales = reloj.now().hour() * 60 + reloj.now().minute();
-    bool esDia = (minutosActuales >= 7 * 60 && minutosActuales < 21 * 60);
+    bool esDia = (minutosActuales >= initDia && minutosActuales < finDia);
     float tempObjetivo = esDia ? tempDia : tempNoche;
 
     // =================================================================

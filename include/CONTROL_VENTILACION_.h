@@ -14,155 +14,86 @@
 extern RTC_DS1307 reloj;
 
 
-/**
- * @brief Controla el ventilador de entrada de aire a la cámara
- * Prioridades:
- * 1. Si temperatura > tempMaxSeguridad → Ventilador al 100%
- * 2. Si humedad < humMinSeguridad → Apagar ventilación externa
- * 3. Si todo normal → Ciclo normal (basal/ráfaga)
- */
 void controlVentilacion(){
     unsigned long tiempoActual = millis();
+    // verificamos si ya paso el tiempo de reaccion para seguir con la funcion
+    if (tiempoActual - ultimoCambioVentilacion < tiempoReaccionVentilacion) {
+        // No ha pasado suficiente tiempo desde el último cambio salimos de la función y no hacemos nada
+        return;
+    }
+    ultimoCambioVentilacion = tiempoActual;
 
-    static bool ventExternoForzado = false;
-    static bool ventExternoApagadoPorHumedad = false;
-    
-    // *** PRIORITARIO: Control por temperatura máxima de seguridad ***
-    if (temperaturaMax > tempMaxSeguridad) {
-        // Temperatura crítica: activar ventilador al 100%
-        if (potenciaVentiladorexterno != PWM_EXT_RAFAGA) {
-            analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
-            potenciaVentiladorexterno = PWM_EXT_RAFAGA;
-        }
-        ventExternoForzado = true;
-        ventExternoApagadoPorHumedad = false;
-        return;
-    } 
-    // Aplicar histéresis para temperatura
-    else if (ventExternoForzado && temperaturaMax > (tempMaxSeguridad - tempHisteresis)) {
-        // Mantener al 100% hasta que baje por debajo del umbral con histéresis
-        if (potenciaVentiladorexterno != PWM_EXT_RAFAGA) {
-            analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
-            potenciaVentiladorexterno = PWM_EXT_RAFAGA;
-        }
-        return;
-    } 
-    else {
-        ventExternoForzado = false;
+    // Determinar la temperatura objetivo según si es de día o de noche
+    int minutosActuales = reloj.now().hour() * 60 + reloj.now().minute();
+    bool esDia = (minutosActuales >= initDia && minutosActuales < finDia);
+    float tempObjetivo = esDia ? tempDia : tempNoche; 
+
+    // verificamos la temperatura maxima no supere el umbral de seguridad
+    // si es asi, ventilacion externa en modo rafaga y ventilacion interna al maximo
+    // mantenemos hasta que temperatura promedio baje a obejtivo menos histeresis dependiendo si es de dia o de noche
+    if (temperaturaMax >= tempMaxSeguridad && tempPromedio > (tempObjetivo - tempHisteresis)) {
+        analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
+        analogWrite(VENTINTER_PIN, PWM_INT_VENT_MAX);
+        return;     // salimos de la función para mantener este estado
     }
-    
-    // *** Control por humedad mínima de seguridad ***
-    if (humPromedio < humMinSeguridad) {
-        // Humedad muy baja: apagar ventilación externa
-        if (potenciaVentiladorexterno != PWM_EXT_OFF) {
-            analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
-            potenciaVentiladorexterno = PWM_EXT_OFF;
-        }
-        ventExternoApagadoPorHumedad = true;
-        estadoVentExt = 0; // Reiniciar estado del ciclo
-        inicioCicloExt = tiempoActual;
-        return;
-    } 
-    // Aplicar histéresis para humedad
-    else if (ventExternoApagadoPorHumedad && humPromedio < (humMinSeguridad + humHisteresis)) {
-        // Mantener apagado hasta que suba por encima del umbral con histéresis
-        if (potenciaVentiladorexterno != PWM_EXT_OFF) {
-            analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
-            potenciaVentiladorexterno = PWM_EXT_OFF;
-        }
-        return;
-    } 
-    else {
-        ventExternoApagadoPorHumedad = false;
-    }
-    
-    // *** Ventilación normal: Ciclo basal/ráfaga/descanso ***
-    unsigned long tiempoTranscurrido = tiempoActual - inicioCicloExt;
-    // solo si es de dia
-    DateTime ahora = reloj.now();
-    int horaActual = ahora.hour();
-    bool esDia = (horaActual >= initDia && horaActual < finDia);
-    if (!esDia) return;
-    
-    switch (estadoVentExt) {
-        case 0: // Estado inicial / Ventilación basal
-            if (potenciaVentiladorexterno != PWM_EXT_BASAL) {
-                analogWrite(VENTILADOR_PIN, PWM_EXT_BASAL);
-                potenciaVentiladorexterno = PWM_EXT_BASAL;
-            }
-            if (tiempoTranscurrido >= T_EXT_BASAL) {
-                estadoVentExt = 1; // Pasar a ráfaga
-                inicioCicloExt = tiempoActual;
-            }
-            break;
-            
-        case 1: // Ráfaga de ventilación
-            if (potenciaVentiladorexterno != PWM_EXT_RAFAGA) {
-                analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
-                potenciaVentiladorexterno = PWM_EXT_RAFAGA;
-            }
-            if (tiempoTranscurrido >= T_EXT_RAFAGA) {
-                estadoVentExt = 2; // Pasar a descanso
-                inicioCicloExt = tiempoActual;
-            }
-            break;
-            
-        case 2: // Descanso (ventilador apagado)
-            if (potenciaVentiladorexterno != PWM_EXT_OFF) {
-                analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
-                potenciaVentiladorexterno = PWM_EXT_OFF;
-            }
-            if (tiempoTranscurrido >= T_EXT_DESCANSO) {
-                estadoVentExt = 0; // Volver a ventilación basal
-                inicioCicloExt = tiempoActual;
-            }
-            break;
-            
-        default:
-            estadoVentExt = 0;
-            inicioCicloExt = tiempoActual;
-            break;
-    }
-    
-    // *** VENTILACIÓN INTERNA ***
-    // Si la resistencia está encendida se activa la ventilación interna sin conteo
-    // Si está apagada se sigue el ciclo on/off
-    const unsigned long TIEMPO_MIN_ENTRE_CAMBIOS_VENT_INT = 2000; // 2 segundos
-    static int ultimaPotenciaVentInterno = -1;
-    static unsigned long ultimoCambioVentInterno = 0;
-    
+
+    // si la resistencia esta encendida, ventilacion interna a maximo para ayudar a distribuir el calor
     if (estatusResistencia) {
-        if (ultimaPotenciaVentInterno != PWM_INT_VENT_MAX && (tiempoActual - ultimoCambioVentInterno > TIEMPO_MIN_ENTRE_CAMBIOS_VENT_INT)) {
-            analogWrite(VENTINTER_PIN, PWM_INT_VENT_MAX); // Ventilación interna al máximo
-            ultimaPotenciaVentInterno = PWM_INT_VENT_MAX;
-            ultimoCambioVentInterno = tiempoActual;
-        }
-        ventInternoActivo = true;
+        analogWrite(VENTINTER_PIN, PWM_INT_VENT_MAX);
     } else {
-        if (ventInternoActivo) {
-            // Actualmente encendida, verificar si debe apagarse
+        // control de ventilacion interna segun ciclos de encendido y apagado
+        if (estadoVentInt) {
+            // ventilacion interna encendida: comprobar si debe apagarse
             if (tiempoActual - ultimaVentInterno >= T_VENT_INT_ON) {
-                if (ultimaPotenciaVentInterno != PWM_INT_VENT_MIN && (tiempoActual - ultimoCambioVentInterno > TIEMPO_MIN_ENTRE_CAMBIOS_VENT_INT)) {
-                    analogWrite(VENTINTER_PIN, PWM_INT_VENT_MIN); // Apagar ventilación interna
-                    ultimaPotenciaVentInterno = PWM_INT_VENT_MIN;
-                    ultimoCambioVentInterno = tiempoActual;
-                    ultimaVentInterno = tiempoActual; // Reiniciar temporizador de ciclo
-                    ventInternoActivo = false;
-                }
+                analogWrite(VENTINTER_PIN, PWM_INT_VENT_OFF);
+                estadoVentInt = false;
+                ultimaVentInterno = tiempoActual;
             }
         } else {
-            // Actualmente apagada, verificar si debe encenderse
+            // ventilacion interna apagada: comprobar si debe encenderse
             if (tiempoActual - ultimaVentInterno >= T_VENT_INT_OFF) {
-                if (ultimaPotenciaVentInterno != PWM_INT_VENT_MED && (tiempoActual - ultimoCambioVentInterno > TIEMPO_MIN_ENTRE_CAMBIOS_VENT_INT)) {
-                    analogWrite(VENTINTER_PIN, PWM_INT_VENT_MED); // Encender ventilación interna a potencia media
-                    ultimaPotenciaVentInterno = PWM_INT_VENT_MED;
-                    ultimoCambioVentInterno = tiempoActual;
-                    ultimaVentInterno = tiempoActual; // Reiniciar temporizador de ciclo
-                    ventInternoActivo = true;
-                }
+                analogWrite(VENTINTER_PIN, PWM_INT_VENT_MED);
+                estadoVentInt = true;
+                ultimaVentInterno = tiempoActual;
             }
         }
     }
+
+    // control de ventilacion externa segun ciclos: apagado -> basal -> rafaga -> descanso, 0 apagado 1 basal 2 rafaga
+    // revisamos que la humedad promedio no baje del umbral minimo de seguridad antes de activar ventilacion externa
+    if (humPromedio <= humMinSeguridad) {
+        analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
+        estadoVentExt = 0; // reiniciamos el estado a apagado
+        inicioCicloExt = tiempoActual; // reiniciamos el ciclo
+        return; // salimos de la función para mantener ventilación externa apagada
+    }
+    else{
+        // continuamos con el ciclo de ventilación externa normal, si la humedad es segura
+        switch (estadoVentExt) {
+        case 0: // apagado -> basal
+            analogWrite(VENTILADOR_PIN, PWM_EXT_BASAL);
+            estadoVentExt = 1;
+            inicioCicloExt = tiempoActual;
+            break;
+        case 1: // basal -> rafaga
+            if (tiempoActual - inicioCicloExt >= T_EXT_BASAL) {
+                analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
+                estadoVentExt = 2;
+                inicioCicloExt = tiempoActual;
+            }
+            break;
+        case 2: // rafaga -> descanso
+            if (tiempoActual - inicioCicloExt >= T_EXT_RAFAGA) {
+                analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
+                estadoVentExt = 0;
+                inicioCicloExt = tiempoActual;
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    
 }
 
 #endif // CONTROL_VENTILACION__H
