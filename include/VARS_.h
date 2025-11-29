@@ -4,13 +4,6 @@
 //  DEFINICIÓN DE VARIABLES GLOBALES
 // =================================================================
 
-// Configuración de temperatura
-float tempDia = 25.0;
-float tempNoche = 15.0;
-float tempHisteresis = 1.0;
-float tempMaxSeguridad = 28.0;
-float tempMinSeguridad = 10.0;
-
 // Configuración de humedad
 float humObjetivo = 75.0;
 float humHisteresis = 5.0;
@@ -50,17 +43,12 @@ float humedadMax = 0;
 
 
 int potenciaVentiladorexterno = 0;
-bool estatusResistencia = false;
 
 // Temporizadores
 unsigned long ultimaVentInterno = 0;
 
 unsigned long inicioCicloExt = 0;
 int estadoVentExt = 0;
-
-unsigned long inicioCalefaccion = 0;
-const unsigned long MAX_TIEMPO_CALEFACCION = 5 * 60000UL;
-const unsigned long TIEMPO_MINIMO_APAGADO_CALEFACCION = 10 * 60000UL;
 
 // Alarmas
 bool alarmaActiva = false;

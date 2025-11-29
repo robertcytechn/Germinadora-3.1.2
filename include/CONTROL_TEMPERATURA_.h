@@ -11,98 +11,64 @@
 //  CONTROL DE TEMPERATURA (Calefacción)
 // =================================================================
 
+// Configuración de temperatura
+float tempDia = 25.0;
+float tempNoche = 15.0;
+float tempHisteresis = 1.0;
+float tempMaxSeguridad = 28.0;
+float tempMinSeguridad = 10.0;
+bool estatusResistencia = false;
+
+const unsigned long TIEMPO_ENCENDIDO_CALEFACCION = 5 * 60000UL; // 5 minutos de encendido continuo
+const unsigned long TIEMPO_APAGADO_CALEFACCION = 10 * 60000UL; // 10 minutos de descanso
+unsigned long tiempoUltimoCambioCalefaccion = 0;
+
 extern RTC_DS1307 reloj;
 
-/**
- * @brief Controla la resistencia de calefacción
- * Objetivos:
- * - Mantener temperatura de día (initDia-finDia) o de noche (finDia-initDia)
- * - Si temperatura supera objetivo + histéresis → apagar resistencia
- * - Respetar tiempo máximo de encendido continuo (MAX_TIEMPO_CALEFACCION)
- * - Respetar tiempo mínimo de descanso después de apagarse (TIEMPO_MINIMO_APAGADO_CALEFACCION)
- */
 void controlCalefaccion(){
-    static unsigned long ultimoApagado = 0;
-    static bool enDescansoForzado = false;
-    static unsigned long ultimoCambioEstado = 0;
-    
     unsigned long tiempoActual = millis();
-    
-    // PROTECCIÓN: Evitar cambios de estado demasiado rápidos (debouncing)
-    const unsigned long TIEMPO_MIN_ENTRE_CAMBIOS = 2000; // 2 segundos mínimo entre cambios
-    
-    // Determinar si es día o noche según el reloj
-    DateTime ahora = reloj.now();
-    int horaActual = ahora.hour();
-    bool esDia = (horaActual >= initDia && horaActual < finDia);
-    
-    // Seleccionar temperatura objetivo según la hora
-    float tempObjetivo = esDia ? tempDia : tempNoche;
-    
-    // *** 1. Verificar tiempo máximo de calefacción continua ***
-    if (estatusResistencia) {
-        unsigned long tiempoEncendido = tiempoActual - inicioCalefaccion;
-        
-        // Si excede el tiempo máximo, apagar y forzar descanso
-        if (tiempoEncendido >= MAX_TIEMPO_CALEFACCION) {
-            if (estatusResistencia && (tiempoActual - ultimoCambioEstado >= TIEMPO_MIN_ENTRE_CAMBIOS)) {
-                digitalWrite(CALEFACTORA_PIN, LOW);
-                estatusResistencia = false;
-                ultimoApagado = tiempoActual;
-                enDescansoForzado = true;
-                ultimoCambioEstado = tiempoActual;
-            }
-        }
-    }
-    
-    // *** 2. Verificar tiempo mínimo de descanso ***
-    if (enDescansoForzado) {
-        unsigned long tiempoDescanso = tiempoActual - ultimoApagado;
-        
-        // Mantener apagada durante el descanso mínimo
-        if (tiempoDescanso < TIEMPO_MINIMO_APAGADO_CALEFACCION) {
-            if (estatusResistencia) { // Si por alguna razón estuviera encendida, apagarla.
-                digitalWrite(CALEFACTORA_PIN, LOW);
-                estatusResistencia = false;
-                ultimoCambioEstado = tiempoActual; // Registrar el cambio
-            }
-            return;
-        } else {
-            enDescansoForzado = false; // Descanso completado
-        }
-    }
-    
-    // *** 3. Control por temperatura objetivo ***
-    bool nuevoEstado = estatusResistencia;
-    
-    // Si temperatura supera objetivo + histéresis → APAGAR
-    if (tempPromedio >= (tempObjetivo + tempHisteresis)) {
-        nuevoEstado = false;
-    }
-    // Si temperatura está por debajo del objetivo - histéresis → ENCENDER
-    else if (tempPromedio < (tempObjetivo - tempHisteresis)) {
-        if (!enDescansoForzado && !estatusResistencia) { // Solo intentar encender si está apagada
-            nuevoEstado = true;
-        }
-    }
-    // Si está dentro del rango de histéresis, mantener estado actual
-    // (no cambiar nuevoEstado)
-    
-    // *** 4. Aplicar cambio de estado SOLO si hay cambio real y ha pasado tiempo suficiente ***
-    if (nuevoEstado != estatusResistencia && (tiempoActual - ultimoCambioEstado >= TIEMPO_MIN_ENTRE_CAMBIOS)) {
-        estatusResistencia = nuevoEstado;
-        ultimoCambioEstado = tiempoActual;
 
+    // Determinar la temperatura objetivo según si es de día o de noche
+    int minutosActuales = reloj.now().hour() * 60 + reloj.now().minute();
+    bool esDia = (minutosActuales >= 7 * 60 && minutosActuales < 21 * 60);
+    float tempObjetivo = esDia ? tempDia : tempNoche;
+
+    // =================================================================
+    //  PRIORIDAD 1: APAGADO DE EMERGENCIA POR TEMPERATURA MÁXIMA
+    // =================================================================
+    // Si la temperatura máxima supera el umbral de seguridad, apagamos la calefacción inmediatamente.
+    // Esto previene el sobrecalentamiento y reinicia el ciclo de descanso para evitar que el relé se active y desactive rápidamente.
+    if (temperaturaMax >= tempMaxSeguridad) {
         if (estatusResistencia) {
-            // ENCENDER
-            digitalWrite(CALEFACTORA_PIN, HIGH);
-            inicioCalefaccion = tiempoActual;
-        } else {
-            // APAGAR
             digitalWrite(CALEFACTORA_PIN, LOW);
-            ultimoApagado = tiempoActual;
+            estatusResistencia = false;
+            tiempoUltimoCambioCalefaccion = tiempoActual; // Inicia un nuevo ciclo de descanso
+        }
+        return; // Salimos de la función para asegurar que permanezca apagada.
+    }
+
+    // =================================================================
+    //  LÓGICA DE CICLOS DE ENCENDIDO Y DESCANSO
+    // =================================================================
+
+    if (estatusResistencia) {
+        // --- CALEFACCIÓN ENCENDIDA: Comprobar si debe apagarse ---
+        // Se apaga si se cumple el tiempo de encendido O si ya se alcanzó la temperatura objetivo.
+        if (tiempoActual - tiempoUltimoCambioCalefaccion >= TIEMPO_ENCENDIDO_CALEFACCION || tempPromedio > (tempObjetivo + tempHisteresis)) {
+            digitalWrite(CALEFACTORA_PIN, LOW);
+            estatusResistencia = false;
+            tiempoUltimoCambioCalefaccion = tiempoActual; // reiniciamos el ciclo de descanso para evitar encendido y apagado rápido de relé
+        }
+    } else {
+        // --- CALEFACCIÓN APAGADA: Comprobar si debe encenderse ---
+        // Se enciende si la temperatura está por debajo del objetivo Y ha transcurrido el tiempo de descanso.
+        if (tempPromedio < (tempObjetivo - tempHisteresis) && tiempoActual - tiempoUltimoCambioCalefaccion >= TIEMPO_APAGADO_CALEFACCION) {
+            digitalWrite(CALEFACTORA_PIN, HIGH);
+            estatusResistencia = true;
+            tiempoUltimoCambioCalefaccion = tiempoActual; // reiniciamos el ciclo de encendido para evitar encendido y apagado rápido de relé
         }
     }
+
 }
 
 #endif // CONTROL_TEMPERATURA__H
