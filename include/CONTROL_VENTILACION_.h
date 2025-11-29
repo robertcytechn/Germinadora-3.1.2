@@ -31,7 +31,7 @@ void controlVentilacion(){
     // verificamos la temperatura maxima no supere el umbral de seguridad
     // si es asi, ventilacion externa en modo rafaga y ventilacion interna al maximo
     // mantenemos hasta que temperatura promedio baje a obejtivo menos histeresis dependiendo si es de dia o de noche
-    if (temperaturaMax >= tempMaxSeguridad && tempPromedio > (tempObjetivo - tempHisteresis)) {
+    if (temperaturaMax >= tempMaxSeguridad) {
         analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
         analogWrite(VENTINTER_PIN, PWM_INT_VENT_MAX);
         return;     // salimos de la función para mantener este estado
