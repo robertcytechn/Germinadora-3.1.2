@@ -4,68 +4,68 @@
 #include <Arduino.h>
 #include <RTClib.h>
 
-#include <VARS_.h>
 #include <PINS_.h>
 
 // =================================================================
 //  CONTROL DE ILUMINACIÓN (Blanca + Roja)
 // =================================================================
+// Configuración de iluminación
+int initDia = 7 * 60; // inicio del cilo del dia en minutos (7:00 AM)
+int finDia = 21 * 60; // fin del ciclo del dia en minutos (9:00 PM)
+int duracionAmanecer = 90; // duración del amanecer/atardecer en minutos
+int potenciadeluces = 0;
+unsigned long tiempoReaccion = 1 * 60000UL; // tiempo de reaccion de las luces en milisegundos (1 minuto)
+unsigned long ultimoCambio = 0;
 
 extern RTC_DS1307 reloj;
 
 void controlLuces(){
-    static int ultimaPotenciaLuces = -1;
-    static bool ultimoEstadoLucesRojas = false;
-    static unsigned long ultimoCambioLucesRojas = 0;
-    
-    DateTime ahora = reloj.now();
-    int minutosActuales = ahora.hour() * 60 + ahora.minute();
-    int minutosInicio = initDia * 60;
-    int minutosFin = finDia * 60;
 
-    // 1. Control Luces Blancas (Amanecer/Atardecer suave)
-    if (minutosActuales >= minutosInicio && minutosActuales <= minutosFin) {
-        // Amanecer gradual
-        if (minutosActuales < minutosInicio + duracionAmanecer) {
-            potenciadeluces = map(minutosActuales, minutosInicio, minutosInicio + duracionAmanecer, 0, 255);
+    int tiempoActualMinutos = reloj.now().hour() * 60 + reloj.now().minute();
+
+    // comprobar si ha pasado el tiempo de reaccion desde el último cambio
+    unsigned long tiempoActual = millis();
+    if (tiempoActual - ultimoCambio < tiempoReaccion) {
+        // No ha pasado suficiente tiempo desde el último cambio salimos de la función y no hacemos nada
+        return;
+    }
+    ultimoCambio = tiempoActual;
+
+    // revisamos si es de dia o de noche
+    bool esDia = (tiempoActualMinutos >= initDia && tiempoActualMinutos < finDia);
+    //si es de noche salimos de la función y apagamos todo
+    if (!esDia) {
+        potenciadeluces = 0;
+        analogWrite(LUCES_BLANCAS_PIN, potenciadeluces);
+        digitalWrite(LEDS_ROJOS_PIN, LOW);
+        return;
+    }
+    else{
+        //si es de dia, calculamos la potencia de las luces blancas según la hora actual  - si estamos en amanecer o atardecer
+        int minutosDesdeInicioDia = tiempoActualMinutos - initDia;
+        if (minutosDesdeInicioDia < duracionAmanecer) {
+            // Amanecer
+            potenciadeluces = map(minutosDesdeInicioDia, 0, duracionAmanecer, 0, 255);
         }
-        // Atardecer gradual
-        else if (minutosActuales > minutosFin - duracionAmanecer) {
-            potenciadeluces = map(minutosActuales, minutosFin - duracionAmanecer, minutosFin, 255, 0);
+        else if (minutosDesdeInicioDia > (finDia - initDia - duracionAmanecer)) {
+            // Atardecer
+            potenciadeluces = map(minutosDesdeInicioDia, finDia - initDia - duracionAmanecer, finDia - initDia, 255, 0);
         }
-        // Pleno día
         else {
+            // Luz plena durante el día tambien encendemos luces rojas
             potenciadeluces = 255;
         }
-    } else {
-        potenciadeluces = 0; // Noche
-    }
-    
-    // Solo escribir si hay cambio en la potencia
-    if (potenciadeluces != ultimaPotenciaLuces) {
         analogWrite(LUCES_BLANCAS_PIN, potenciadeluces);
-        ultimaPotenciaLuces = potenciadeluces;
-    }
-
-
-    // 2. Control LEDs Rojos (Espectro rojo para fotosíntesis)
-    // Se encienden despues de la duracionAmanecer y se apagan antes de la duracionAmanecer
-    // Esto da un periodo de luz roja más corto pero intenso
-    bool nuevoEstadoRojas = false;
-    if (minutosActuales >= (minutosInicio + duracionAmanecer) && minutosActuales <= (minutosFin - duracionAmanecer)) {
-        nuevoEstadoRojas = true;
-    }
-    
-    // Solo escribir si hay cambio en el estado y ha pasado el tiempo de debouncing
-    if (nuevoEstadoRojas != ultimoEstadoLucesRojas) {
-        unsigned long tiempoActual = millis();
-        if (tiempoActual - ultimoCambioLucesRojas > 2000) { // Debounce de 2 segundos
-            digitalWrite(LEDS_ROJOS_PIN, nuevoEstadoRojas ? HIGH : LOW);
-            lucesRojasOn = nuevoEstadoRojas;
-            ultimoEstadoLucesRojas = nuevoEstadoRojas;
-            ultimoCambioLucesRojas = tiempoActual;
+        //revisamos que las luces rojas solo se enciendan despues del amanecer completo y se apaguen antes del atardecer
+        if (minutosDesdeInicioDia >= duracionAmanecer && minutosDesdeInicioDia < (finDia - initDia - duracionAmanecer)) {
+            digitalWrite(LEDS_ROJOS_PIN, HIGH);
         }
+        else {
+            digitalWrite(LEDS_ROJOS_PIN, LOW);
+        }
+        return;
     }
+
 }
 
 

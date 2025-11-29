@@ -17,10 +17,7 @@ float humHisteresis = 5.0;
 float humMaxSeguridad = 95.0;
 float humMinSeguridad = 55.0;
 
-// Configuración de iluminación
-int initDia = 7;
-int finDia = 21;
-int duracionAmanecer = 90;
+
 
 // Tiempos
 const unsigned long TIEMPO_LECTURA_DHT = 5000;
@@ -51,14 +48,12 @@ float humPromedio = 0;
 float temperaturaMax = 0;
 float humedadMax = 0;
 
-int potenciadeluces = 0;
+
 int potenciaVentiladorexterno = 0;
-bool lucesRojasOn = false;
 bool estatusResistencia = false;
 
 // Temporizadores
 unsigned long ultimaVentInterno = 0;
-bool ventInternoActivo = false;
 
 unsigned long inicioCicloExt = 0;
 int estadoVentExt = 0;
