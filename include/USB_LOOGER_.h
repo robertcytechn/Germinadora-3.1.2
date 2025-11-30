@@ -11,12 +11,9 @@
 //  CONFIGURACIÓN DEL LOGGER USB
 // =================================================================
 
-// Asumimos que el pin Chip Select (CS) del CH376 está conectado al pin 10.
-// ¡¡¡ IMPORTANTE !!! Si usa otro pin, modifique esta definición.
-#define CH376_SPI_CS_PIN 10
-// Asumimos que el pin de interrupción no se utiliza, como lo permite una de las configuraciones de la libreria.
-// la velocidad del SPI la dejamos por defecto en 125Khz
-Ch376msc usb(CH376_SPI_CS_PIN);
+// Configuración para usar el puerto Serie 1 (Hardware Serial) a 9600 baudios.
+// Conectar el CH376 a los pines TX1 y RX1 del Arduino Mega.
+Ch376msc usb(Serial1, 9600);
 
 // Intervalo de logging: 15 minutos en milisegundos
 const unsigned long LOG_INTERVAL = 15 * 60 * 1000UL;
@@ -37,15 +34,12 @@ void diagnoseCH376() {
         uint8_t ver = usb.getChipVer();
         Serial.print("CH376: Versión del chip: ");
         Serial.println(ver);
-        Serial.println("CH376: ¡El módulo parece estar conectado correctamente!");
+        Serial.println("CH376: ¡El módulo parece estar conectado correctamente por Serial1!");
     } else {
         Serial.println("************************************************************");
         Serial.println("CH376: ERROR CRÍTICO: No se pudo comunicar con el módulo CH376.");
-        Serial.println("  - Verifique el cableado (MOSI, MISO, SCK, CS, VCC, GND).");
-        Serial.print("  - El código asume que el pin CS (Chip Select) es el pin ");
-        Serial.print(CH376_SPI_CS_PIN);
-        Serial.println(".");
-        Serial.println("  - Si usa un pin diferente, modifique 'CH376_SPI_CS_PIN' en 'include/USB_LOOGER_.h'.");
+        Serial.println("  - Verifique el cableado en los pines TX1 y RX1 del Arduino Mega.");
+        Serial.println("  - Asegúrese de que la velocidad en baudios (9600) es la correcta.");
         Serial.println("************************************************************");
     }
 }
@@ -55,9 +49,8 @@ void diagnoseCH376() {
  *        Debe ser llamado en la función setup() principal.
  */
 void setupLogger() {
-    Serial.println("Inicializando logger USB...");
-    pinMode(CH376_SPI_CS_PIN, OUTPUT);
-    digitalWrite(CH376_SPI_CS_PIN, HIGH); // Asegurarse que el CS está en estado inactivo
+    Serial.println("Inicializando logger USB via Serial1...");
+    Serial1.begin(9600);
     delay(100);
     usb.init();
     diagnoseCH376(); // Llamada a la función de diagnóstico
