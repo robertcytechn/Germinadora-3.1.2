@@ -27,7 +27,15 @@ extern int codigoAlarma;
 //  FUNCIÓN PARA MOSTRAR INFORMACIÓN EN LA PANTALLA OLED
 // =================================================================
 void mostrarPantalla() {
-    display.clearDisplay();
+    // verificamos si ya paso el tiempo de reaccion para mostrar la pantalla y no saturar i2c
+    static unsigned long ultimoUpdatePantalla = 0;
+    unsigned long tiempoActual = millis();
+    if (tiempoActual - ultimoUpdatePantalla < TIEMPO_ACTUALIZACION_PANTALLA) {
+        // No ha pasado suficiente tiempo desde el último update salimos de la función y no hacemos nada
+        return;
+    }
+    ultimoUpdatePantalla = tiempoActual;
+    
     display.setTextColor(SSD1306_WHITE);
     
     // Obtener hora actual del RTC

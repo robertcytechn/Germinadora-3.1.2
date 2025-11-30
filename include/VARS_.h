@@ -52,8 +52,8 @@ unsigned long ultimoCambioVentilacion = 0;                      // marca de tiem
 
 
 // Tiempos
-const unsigned long TIEMPO_LECTURA_DHT = 5000;
-const unsigned long TIEMPO_ACTUALIZACION_PANTALLA = 1000;
+const unsigned long TIEMPO_LECTURA_DHT = 5000;                    // tiempo entre lecturas del sensor DHT en milisegundos (5 segundos)
+const unsigned long TIEMPO_ACTUALIZACION_PANTALLA = 1000;         // tiempo de actualización de la pantalla en milisegundos (1 segundo)
 
 
 // Variables de estado
