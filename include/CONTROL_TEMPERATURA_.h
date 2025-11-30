@@ -37,6 +37,7 @@ void controlCalefaccion(){
             digitalWrite(CALEFACTORA_PIN, LOW);
             estatusResistencia = false;
             tiempoUltimoCambioCalefaccion = tiempoActual; // Inicia un nuevo ciclo de descanso
+            Serial.println("CONTROL TEMP: ¡EMERGENCIA! Temp maxima superada. Apagando calefaccion.");
         }
         return; // Salimos de la función para asegurar que permanezca apagada.
     }
@@ -52,6 +53,7 @@ void controlCalefaccion(){
             digitalWrite(CALEFACTORA_PIN, LOW);
             estatusResistencia = false;
             tiempoUltimoCambioCalefaccion = tiempoActual; // reiniciamos el ciclo de descanso para evitar encendido y apagado rápido de relé
+            Serial.println("CONTROL TEMP: Apagando calefaccion (ciclo/temp alcanzada).");
         }
     } else {
         // --- CALEFACCIÓN APAGADA: Comprobar si debe encenderse ---
@@ -60,6 +62,7 @@ void controlCalefaccion(){
             digitalWrite(CALEFACTORA_PIN, HIGH);
             estatusResistencia = true;
             tiempoUltimoCambioCalefaccion = tiempoActual; // reiniciamos el ciclo de encendido para evitar encendido y apagado rápido de relé
+            Serial.println("CONTROL TEMP: Encendiendo calefaccion (temp baja y descanso cumplido).");
         }
     }
 

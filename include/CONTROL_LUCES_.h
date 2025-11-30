@@ -27,11 +27,13 @@ void controlLuces(){
     // revisamos si es de dia o de noche
     bool esDia = (tiempoActualMinutos >= initDia && tiempoActualMinutos < finDia);
     //si es de noche salimos de la función y apagamos todo
+    static bool ultimoEstadoDia = !esDia; // Para detectar el cambio
     if (!esDia) {
         potenciadeluces = 0;
         analogWrite(LUCES_BLANCAS_PIN, potenciadeluces);
         digitalWrite(LEDS_ROJOS_PIN, LOW);
-        return;
+        if (ultimoEstadoDia != esDia) { Serial.println("CONTROL LUCES: Es de noche, apagando luces."); ultimoEstadoDia = esDia; }
+        return; 
     }
     else{
         //si es de dia, calculamos la potencia de las luces blancas según la hora actual  - si estamos en amanecer o atardecer
@@ -39,23 +41,29 @@ void controlLuces(){
         if (minutosDesdeInicioDia < duracionAmanecer) {
             // Amanecer
             potenciadeluces = map(minutosDesdeInicioDia, 0, duracionAmanecer, 0, 255);
+            Serial.print("CONTROL LUCES: Amanecer, potencia: "); Serial.println(potenciadeluces);
         }
         else if (minutosDesdeInicioDia > (finDia - initDia - duracionAmanecer)) {
             // Atardecer
             potenciadeluces = map(minutosDesdeInicioDia, finDia - initDia - duracionAmanecer, finDia - initDia, 255, 0);
+            Serial.print("CONTROL LUCES: Atardecer, potencia: "); Serial.println(potenciadeluces);
         }
         else {
             // Luz plena durante el día tambien encendemos luces rojas
             potenciadeluces = 255;
+            if (ultimoEstadoDia != esDia) { Serial.println("CONTROL LUCES: Es de dia, luz a plena potencia."); }
         }
         analogWrite(LUCES_BLANCAS_PIN, potenciadeluces);
         //revisamos que las luces rojas solo se enciendan despues del amanecer completo y se apaguen antes del atardecer
         if (minutosDesdeInicioDia >= duracionAmanecer && minutosDesdeInicioDia < (finDia - initDia - duracionAmanecer)) {
             digitalWrite(LEDS_ROJOS_PIN, HIGH);
+            if (ultimoEstadoDia != esDia) { Serial.println("CONTROL LUCES: Encendiendo luces rojas."); }
         }
         else {
             digitalWrite(LEDS_ROJOS_PIN, LOW);
+            if (ultimoEstadoDia != esDia) { Serial.println("CONTROL LUCES: Apagando luces rojas."); }
         }
+        if (ultimoEstadoDia != esDia) { ultimoEstadoDia = esDia; }
         return;
     }
 

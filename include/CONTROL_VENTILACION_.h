@@ -24,23 +24,20 @@ void controlVentilacion(){
     }
     ultimoCambioVentilacion = tiempoActual;
 
-    // Determinar la temperatura objetivo según si es de día o de noche
-    int minutosActuales = reloj.now().hour() * 60 + reloj.now().minute();
-    bool esDia = (minutosActuales >= initDia && minutosActuales < finDia);
-    float tempObjetivo = esDia ? tempDia : tempNoche; 
-
     // verificamos la temperatura maxima no supere el umbral de seguridad
     // si es asi, ventilacion externa en modo rafaga y ventilacion interna al maximo
     // mantenemos hasta que temperatura promedio baje a obejtivo menos histeresis dependiendo si es de dia o de noche
     if (temperaturaMax >= tempMaxSeguridad) {
         analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
         analogWrite(VENTINTER_PIN, PWM_INT_VENT_MAX);
+        Serial.println("CONTROL VENT: ¡EMERGENCIA! Temp maxima superada. Ventilacion forzada.");
         return;     // salimos de la función para mantener este estado
     }
 
     // si la resistencia esta encendida, ventilacion interna a maximo para ayudar a distribuir el calor
     if (estatusResistencia) {
         analogWrite(VENTINTER_PIN, PWM_INT_VENT_MAX);
+        Serial.println("CONTROL VENT: Calefaccion encendida, activando ventilacion interna para distribuir calor.");
     } else {
         // control de ventilacion interna segun ciclos de encendido y apagado
         if (estadoVentInt) {
@@ -49,6 +46,7 @@ void controlVentilacion(){
                 analogWrite(VENTINTER_PIN, PWM_INT_VENT_OFF);
                 estadoVentInt = false;
                 ultimaVentInterno = tiempoActual;
+                Serial.println("CONTROL VENT: Fin ciclo ON ventilacion interna.");
             }
         } else {
             // ventilacion interna apagada: comprobar si debe encenderse
@@ -56,6 +54,7 @@ void controlVentilacion(){
                 analogWrite(VENTINTER_PIN, PWM_INT_VENT_MED);
                 estadoVentInt = true;
                 ultimaVentInterno = tiempoActual;
+                Serial.println("CONTROL VENT: Inicio ciclo ON ventilacion interna.");
             }
         }
     }
@@ -66,6 +65,7 @@ void controlVentilacion(){
         analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
         estadoVentExt = 0; // reiniciamos el estado a apagado
         inicioCicloExt = tiempoActual; // reiniciamos el ciclo
+        Serial.println("CONTROL VENT: Humedad minima de seguridad. Apagando ventilacion externa.");
         return; // salimos de la función para mantener ventilación externa apagada
     }
     else{
@@ -75,12 +75,14 @@ void controlVentilacion(){
             analogWrite(VENTILADOR_PIN, PWM_EXT_BASAL);
             estadoVentExt = 1;
             inicioCicloExt = tiempoActual;
+            Serial.println("CONTROL VENT: Iniciando ciclo ventilacion externa -> BASAL.");
             break;
         case 1: // basal -> rafaga
             if (tiempoActual - inicioCicloExt >= T_EXT_BASAL) {
                 analogWrite(VENTILADOR_PIN, PWM_EXT_RAFAGA);
                 estadoVentExt = 2;
                 inicioCicloExt = tiempoActual;
+                Serial.println("CONTROL VENT: Pasando a -> RAFAGA.");
             }
             break;
         case 2: // rafaga -> descanso
@@ -88,6 +90,7 @@ void controlVentilacion(){
                 analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
                 estadoVentExt = 0;
                 inicioCicloExt = tiempoActual;
+                Serial.println("CONTROL VENT: Pasando a -> DESCANSO.");
             }
             break;
         default:

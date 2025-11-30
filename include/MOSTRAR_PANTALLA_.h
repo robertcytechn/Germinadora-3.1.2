@@ -36,6 +36,9 @@ void mostrarPantalla() {
     }
     ultimoUpdatePantalla = tiempoActual;
     
+    // Limpiamos el buffer de la pantalla antes de dibujar el nuevo frame
+    display.clearDisplay();
+
     display.setTextColor(SSD1306_WHITE);
     
     // Obtener hora actual del RTC
@@ -147,6 +150,50 @@ void mostrarPantalla() {
     }
     
     display.display();
+
+    // =================================================================
+    //  IMPRESIÓN EN MONITOR SERIAL PARA DEPURACIÓN
+    // =================================================================
+    Serial.println("\n---[ Actualizacion Pantalla & Serial ]---");
+    // HORA Y FECHA
+    Serial.print("Hora: ");
+    if (ahora.hour() < 10) Serial.print("0");
+    Serial.print(ahora.hour());
+    Serial.print(":");
+    if (ahora.minute() < 10) Serial.print("0");
+    Serial.print(ahora.minute());
+    Serial.print(":");
+    if (ahora.second() < 10) Serial.print("0");
+    Serial.print(ahora.second());
+    Serial.print("  Fecha: ");
+    if (ahora.day() < 10) Serial.print("0");
+    Serial.print(ahora.day());
+    Serial.print("/");
+    if (ahora.month() < 10) Serial.print("0");
+    Serial.println(ahora.month());
+
+    // TEMPERATURA Y HUMEDAD
+    Serial.print("Temp Prom: "); Serial.print(tempPromedio, 1); Serial.print("C (Max: "); Serial.print(temperaturaMax, 1); Serial.print("C)");
+    Serial.print(" | Hum Prom: "); Serial.print(humPromedio, 0); Serial.print("% (Max: "); Serial.print(humedadMax, 0); Serial.println("%)");
+
+    // SENSORES INDIVIDUALES
+    Serial.print("Sensor 1: T="); Serial.print(temperaturas[0], 0); Serial.print("C, H="); Serial.print(humedades[0], 0); Serial.println("%");
+    Serial.print("Sensor 2: T="); Serial.print(temperaturas[1], 0); Serial.print("C, H="); Serial.print(humedades[1], 0); Serial.println("%");
+    
+    // OBJETIVOS
+    Serial.print("Temp Objetivo Dia: "); Serial.print(tempDia, 1); Serial.print("C | Temp Objetivo Noche: "); Serial.print(tempNoche, 1); Serial.println("C");
+
+    // ACTUADORES
+    Serial.print("Actuadores -> LUZ: ");
+    if (potenciadeluces > 0) { Serial.print(map(potenciadeluces, 0, 255, 0, 100)); Serial.print("%"); } else { Serial.print("OFF"); }
+    Serial.print(" | CALEFACCION: ");
+    if (estatusResistencia) { Serial.print("ON"); } else { Serial.print("OFF"); }
+    Serial.println();
+
+    // ALARMA
+    if (alarmaActiva) {
+        Serial.print("¡¡¡ ALARMA ACTIVA !!! Codigo: "); Serial.println(codigoAlarma);
+    }
 }
 
 #endif // MOSTRAR_PANTALLA__H
