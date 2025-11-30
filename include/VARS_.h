@@ -17,7 +17,9 @@ int duracionAmanecer = 90;                      // duración del amanecer/atarde
 int potenciadeluces = 0;                        // potencia actual de las luces blancas
 unsigned long tiempoReaccion = 1 * 60000UL;     // tiempo de reaccion de las luces en milisegundos (1 minuto)
 unsigned long ultimoCambio = 0;                 // marca de tiempo del último cambio de iluminación
-
+// relays con logica inversa
+const int RELAY_ENCENDIDO = LOW;
+const int RELAY_APAGADO = HIGH;
 // Configuración de temperatura
 float tempDia = 25.0;                                               // temperatura objetivo durante el día
 float tempNoche = 15.0;                                             // temperatura objetivo durante la noche

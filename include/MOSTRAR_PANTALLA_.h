@@ -59,11 +59,12 @@ void mostrarPantalla() {
     display.print(ahora.second());
     
     display.print(" ");
-    if (ahora.day() < 10) display.print("0");
-    display.print(ahora.day());
-    display.print("/");
-    if (ahora.month() < 10) display.print("0");
-    display.print(ahora.month());
+    display.print("TObvo:");
+    int minutosActuales = reloj.now().hour() * 60 + reloj.now().minute();
+    bool esDia = (minutosActuales >= initDia && minutosActuales < finDia);
+    float tempObjetivo = esDia ? tempDia : tempNoche;
+    display.print(tempObjetivo, 1);
+    display.print("C");
     
     // ===== LÍNEA 2: SEPARADOR =====
     display.drawLine(0, 9, 128, 9, SSD1306_WHITE);

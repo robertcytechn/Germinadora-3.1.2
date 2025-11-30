@@ -5,6 +5,7 @@
 #include <RTClib.h>
 #include <Wire.h>
 #include <SPI.h>
+#include <avr/wdt.h> // Necesario para wdt_enable
 
 #include <PINS_.h>
 #include <VARS_.h>
@@ -54,23 +55,39 @@ void setup() {
 
     // Configuración de pines
     pinMode(LEDS_ROJOS_PIN, OUTPUT);
+    digitalWrite(LEDS_ROJOS_PIN, HIGH);           // apagamos rele con logica inversa
     pinMode(CALEFACTORA_PIN, OUTPUT);
-    pinMode(HUMIDIFICADOR_PIN, OUTPUT);
-    pinMode(BUZZER_PIN, OUTPUT);
+    digitalWrite(CALEFACTORA_PIN, HIGH);           // apagamos rele con logica inversa
     pinMode(VENTILADOR_PIN, OUTPUT);
     pinMode(VENTINTER_PIN, OUTPUT);
     pinMode(LUCES_BLANCAS_PIN, OUTPUT);
 
-    pinMode(BTN_ENTER_PIN, INPUT_PULLUP);
-    pinMode(BTN_UP_PIN, INPUT_PULLUP);
-    pinMode(BTN_DOWN_PIN, INPUT_PULLUP);
-    pinMode(BTN_FREE_TEST_PIN, INPUT_PULLUP);
-
     Serial.println("Inicializacion completada.");
 
+    // hacemos un test rapido para activar todos los sistemas al maximo por 10 segundos
+    Serial.println("Realizando test rapido de sistemas (10 segundos)...");
+    digitalWrite(LEDS_ROJOS_PIN, RELAY_ENCENDIDO);
+    digitalWrite(CALEFACTORA_PIN, RELAY_ENCENDIDO);
+    analogWrite(VENTILADOR_PIN, 255);
+    analogWrite(VENTINTER_PIN, 255);
+    analogWrite(LUCES_BLANCAS_PIN, 255);
+    delay(10000);
+    digitalWrite(LEDS_ROJOS_PIN, RELAY_APAGADO);
+    digitalWrite(CALEFACTORA_PIN, RELAY_APAGADO);
+    analogWrite(VENTILADOR_PIN, 0);
+    analogWrite(VENTINTER_PIN, 0);
+    analogWrite(LUCES_BLANCAS_PIN, 0);
+    Serial.println("Test completado. Sistemas apagados.");
+    delay(1000);
+    Serial.println("Entrando en el bucle principal...");
+
+    //watchdog por si acaso se cuelga el sistema - opcional
+    wdt_enable(WDTO_8S); // habilitar el watchdog con un tiempo de 8 segundos
 }
 
 void loop() {
+    // sigo vivo
+    wdt_reset();
     leerTemperaturaHumedad();
     controlLuces();
     controlVentilacion();
