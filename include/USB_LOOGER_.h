@@ -16,8 +16,8 @@
 Ch376msc usb(Serial1, 9600);
 
 // Intervalo de logging: 15 minutos en milisegundos
-const unsigned long LOG_INTERVAL = 15 * 60 * 1000UL;
-//const unsigned long LOG_INTERVAL = 10 * 1000UL; //para pruebas rapidas de 10 segundos
+//const unsigned long LOG_INTERVAL = 15 * 60 * 1000UL;
+const unsigned long LOG_INTERVAL = 10 * 1000UL; //para pruebas rapidas de 10 segundos
 unsigned long lastLogTime = 0;
 
 // Objeto RTC externo (declarado en main.cpp)
@@ -141,7 +141,7 @@ void handleLogging() {
      // revisamos si hay algun mensaje del ch376
     if (usb.checkIntMessage())
     {
-       // Serial.println("Logger: Mensaje de interrupcion del CH376.");
+        Serial.println("Logger: Mensaje de interrupcion del CH376.");
     }
 }
 

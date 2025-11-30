@@ -16,6 +16,7 @@
 #include <CONTROL_TEMPERATURA_.h>
 #include <MOSTRAR_PANTALLA_.h>
 #include <USB_LOOGER_.h>
+#include <CONTROL_HUMEDAD_.h>
 
 // =================================================================
 //  OBJETOS GLOBALES
@@ -65,6 +66,9 @@ void setup() {
     pinMode(VENTILADOR_PIN, OUTPUT);
     pinMode(VENTINTER_PIN, OUTPUT);
     pinMode(LUCES_BLANCAS_PIN, OUTPUT);
+    pinMode(HUMIDIFICADOR_PIN, OUTPUT);
+    digitalWrite(HUMIDIFICADOR_PIN, RELAY_APAGADO); // Aseguramos que arranque "sin presionar"
+
 
     Serial.println("Inicializacion completada.");
 
@@ -79,6 +83,7 @@ void loop() {
     controlLuces();
     controlVentilacion();
     controlCalefaccion();
+    controlHumedad();
     mostrarPantalla();
     handleLogging();
 }

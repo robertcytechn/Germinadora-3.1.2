@@ -20,6 +20,8 @@ unsigned long ultimoCambio = 0;                 // marca de tiempo del último c
 // relays con logica inversa
 const int RELAY_ENCENDIDO = LOW;
 const int RELAY_APAGADO = HIGH;
+
+
 // Configuración de temperatura
 float tempDia = 25.0;                                               // temperatura objetivo durante el día
 float tempNoche = 15.0;                                             // temperatura objetivo durante la noche
@@ -27,8 +29,8 @@ float tempHisteresis = 1.0;                                         // margen de
 float tempMaxSeguridad = 28.0;                                      // temperatura máxima de seguridad
 float tempMinSeguridad = 10.0;                                      // temperatura mínima de seguridad  
 bool estatusResistencia = false;                                    // estado actual de la resistencia de calefacción
-const unsigned long TIEMPO_ENCENDIDO_CALEFACCION = 5 * 60000UL;     // 5 minutos de encendido continuo
-const unsigned long TIEMPO_APAGADO_CALEFACCION = 10 * 60000UL;      // 10 minutos de descanso
+const unsigned long TIEMPO_ENCENDIDO_CALEFACCION = 3 * 60000UL;     // 3 minutos de encendido continuo
+const unsigned long TIEMPO_APAGADO_CALEFACCION = 5 * 60000UL;      // 5 minutos de descanso
 unsigned long tiempoUltimoCambioCalefaccion = 0;                    // marca de tiempo del último cambio de la calefacción
 unsigned long tiempoReaccionCalefaccion = 3000UL;                 // tiempo de reaccion de la calefacción en milisegundos (3 segundos)
 
@@ -50,6 +52,16 @@ int estadoVentExt = 0;                                          // estado actual
 bool estadoVentInt = false;                                     // estado actual de la ventilación interna: false=apagada, true=encendida
 unsigned long tiempoReaccionVentilacion = 30000UL;              // tiempo de reaccion de la ventilación en milisegundos (30 segundos)
 unsigned long ultimoCambioVentilacion = 0;                      // marca de tiempo del último cambio de ventilación
+
+// configuración de control de humedad
+static bool estatusHumidificador = false; 
+unsigned long tiempoUltimoCambioHumedad = 0;      
+const unsigned long tiempoReaccionHumedad = 2 * 60000UL; // 2 minutos entre cambios normales
+const int DURACION_PULSO_BOTON = 500;             
+// --- VARIABLES PARA LA RESINCRONIZACIÓN (NUEVO) ---
+const float HUM_UMBRAL_DESINCRONIZACION = 93.0;   // Si pasa de esto, asumimos que se quedó pegado encendido
+unsigned long ultimoIntentoResync = 0;            // Para no estar pulsando a cada rato si la humedad baja lento
+const unsigned long TIEMPO_ESPERA_RESYNC = 5 * 60000UL; // Esperamos 5 min después de un pulso de emergencia antes de intentar otro
 
 
 
