@@ -15,8 +15,6 @@ extern RTC_DS1307 reloj;
 
 void controlLuces(){
 
-    int tiempoActualMinutos = reloj.now().hour() * 60 + reloj.now().minute();
-
     // comprobar si ha pasado el tiempo de reaccion desde el último cambio
     unsigned long tiempoActual = millis();
     if (tiempoActual - ultimoCambio < tiempoReaccion) {
@@ -24,6 +22,7 @@ void controlLuces(){
         return;
     }
     ultimoCambio = tiempoActual;
+     int tiempoActualMinutos = reloj.now().hour() * 60 + reloj.now().minute();
 
     // revisamos si es de dia o de noche
     bool esDia = (tiempoActualMinutos >= initDia && tiempoActualMinutos < finDia);

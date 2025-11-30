@@ -15,6 +15,12 @@ extern RTC_DS1307 reloj;
 
 void controlCalefaccion(){
     unsigned long tiempoActual = millis();
+    // verificamos si ya paso el tiempo de reaccion para seguir con la funcion
+    if (tiempoActual - tiempoUltimoCambioCalefaccion < tiempoReaccionCalefaccion) {
+        // No ha pasado suficiente tiempo desde el último cambio salimos de la función y no hacemos nada
+        // no saturamos i2c
+        return;
+    }
 
     // Determinar la temperatura objetivo según si es de día o de noche
     int minutosActuales = reloj.now().hour() * 60 + reloj.now().minute();

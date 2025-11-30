@@ -19,6 +19,7 @@ void controlVentilacion(){
     // verificamos si ya paso el tiempo de reaccion para seguir con la funcion
     if (tiempoActual - ultimoCambioVentilacion < tiempoReaccionVentilacion) {
         // No ha pasado suficiente tiempo desde el último cambio salimos de la función y no hacemos nada
+        // no saturamos i2c
         return;
     }
     ultimoCambioVentilacion = tiempoActual;

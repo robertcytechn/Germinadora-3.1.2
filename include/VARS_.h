@@ -28,6 +28,7 @@ bool estatusResistencia = false;                                    // estado ac
 const unsigned long TIEMPO_ENCENDIDO_CALEFACCION = 5 * 60000UL;     // 5 minutos de encendido continuo
 const unsigned long TIEMPO_APAGADO_CALEFACCION = 10 * 60000UL;      // 10 minutos de descanso
 unsigned long tiempoUltimoCambioCalefaccion = 0;                    // marca de tiempo del último cambio de la calefacción
+unsigned long tiempoReaccionCalefaccion = 3000UL;                 // tiempo de reaccion de la calefacción en milisegundos (3 segundos)
 
 // configuración de ventilación externa e interna
 const unsigned long T_VENT_INT_ON = 3 * 60000UL;                // 3 minutos de ventilación interna encendida
