@@ -18,7 +18,7 @@ void controlVentilacion(){
     // Si el modo anti-hongos está activo, forzamos ventilación externa al 80% y apagamos la interna
     if (modoAntiHongos) {
         analogWrite(VENTILADOR_PIN, 204);  // 80% de 255 = 204
-        analogWrite(VENTINTER_PIN, PWM_INT_VENT_OFF);
+        analogWrite(VENTINTER_PIN, PWM_INT_VENT_MAX);
         static bool mensajeMostrado = false;
         if (!mensajeMostrado) {
             Serial.println("CONTROL VENT: Modo ANTI-HONGOS - Ventilacion externa al 80%, interna desactivada.");
