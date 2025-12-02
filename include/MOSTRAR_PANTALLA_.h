@@ -29,38 +29,34 @@ extern int codigoAlarma;
 void mostrarPantalla() {
     // verificamos si ya paso el tiempo de reaccion para mostrar la pantalla y no saturar i2c
     static unsigned long ultimoUpdatePantalla = 0;
-    unsigned long tiempoActual = millis();
-    if (tiempoActual - ultimoUpdatePantalla < TIEMPO_ACTUALIZACION_PANTALLA) {
+    if (TIEMPO_ACTUAL_MS - ultimoUpdatePantalla < TIEMPO_ACTUALIZACION_PANTALLA) {
         // No ha pasado suficiente tiempo desde el último update salimos de la función y no hacemos nada
         return;
     }
-    ultimoUpdatePantalla = tiempoActual;
+    ultimoUpdatePantalla = TIEMPO_ACTUAL_MS;
     
     // Limpiamos el buffer de la pantalla antes de dibujar el nuevo frame
     display.clearDisplay();
 
     display.setTextColor(SSD1306_WHITE);
     
-    // Obtener hora actual del RTC
-    DateTime ahora = reloj.now();
-    
     // ===== LÍNEA 1: HORA Y FECHA =====
     display.setTextSize(1);
     display.setCursor(0, 0);
     
     // Formato: HH:MM:SS DD/MM
-    if (ahora.hour() < 10) display.print("0");
-    display.print(ahora.hour());
+    if (RELOJ_GLOBAL.hour() < 10) display.print("0");
+    display.print(RELOJ_GLOBAL.hour());
     display.print(":");
-    if (ahora.minute() < 10) display.print("0");
-    display.print(ahora.minute());
+    if (RELOJ_GLOBAL.minute() < 10) display.print("0");
+    display.print(RELOJ_GLOBAL.minute());
     display.print(":");
-    if (ahora.second() < 10) display.print("0");
-    display.print(ahora.second());
+    if (RELOJ_GLOBAL.second() < 10) display.print("0");
+    display.print(RELOJ_GLOBAL.second());
     
     display.print(" ");
     display.print("TObvo:");
-    int minutosActuales = reloj.now().hour() * 60 + reloj.now().minute();
+    int minutosActuales = RELOJ_GLOBAL.hour() * 60 + RELOJ_GLOBAL.minute();
     bool esDia = (minutosActuales >= initDia && minutosActuales < finDia);
     float tempObjetivo = esDia ? tempDia : tempNoche;
     display.print(tempObjetivo, 1);
@@ -158,20 +154,20 @@ void mostrarPantalla() {
     Serial.println("\n---[ Actualizacion Pantalla & Serial ]---");
     // HORA Y FECHA
     Serial.print("Hora: ");
-    if (ahora.hour() < 10) Serial.print("0");
-    Serial.print(ahora.hour());
+    if (RELOJ_GLOBAL.hour() < 10) Serial.print("0");
+    Serial.print(RELOJ_GLOBAL.hour());
     Serial.print(":");
-    if (ahora.minute() < 10) Serial.print("0");
-    Serial.print(ahora.minute());
+    if (RELOJ_GLOBAL.minute() < 10) Serial.print("0");
+    Serial.print(RELOJ_GLOBAL.minute());
     Serial.print(":");
-    if (ahora.second() < 10) Serial.print("0");
-    Serial.print(ahora.second());
+    if (RELOJ_GLOBAL.second() < 10) Serial.print("0");
+    Serial.print(RELOJ_GLOBAL.second());
     Serial.print("  Fecha: ");
-    if (ahora.day() < 10) Serial.print("0");
-    Serial.print(ahora.day());
+    if (RELOJ_GLOBAL.day() < 10) Serial.print("0");
+    Serial.print(RELOJ_GLOBAL.day());
     Serial.print("/");
-    if (ahora.month() < 10) Serial.print("0");
-    Serial.println(ahora.month());
+    if (RELOJ_GLOBAL.month() < 10) Serial.print("0");
+    Serial.println(RELOJ_GLOBAL.month());
 
     // TEMPERATURA Y HUMEDAD
     Serial.print("Temp Prom: "); Serial.print(tempPromedio, 1); Serial.print("C (Max: "); Serial.print(temperaturaMax, 1); Serial.print("C)");

@@ -14,16 +14,15 @@
 extern RTC_DS1307 reloj;
 
 void controlCalefaccion(){
-    unsigned long tiempoActual = millis();
     // verificamos si ya paso el tiempo de reaccion para seguir con la funcion
-    if (tiempoActual - tiempoUltimoCambioCalefaccion < tiempoReaccionCalefaccion) {
+    if (TIEMPO_ACTUAL_MS - tiempoUltimoCambioCalefaccion < TIEMPO_REACCION_CALEFACCION) {
         // No ha pasado suficiente tiempo desde el último cambio salimos de la función y no hacemos nada
         // no saturamos i2c
         return;
     }
 
     // Determinar la temperatura objetivo según si es de día o de noche
-    int minutosActuales = reloj.now().hour() * 60 + reloj.now().minute();
+    int minutosActuales = RELOJ_GLOBAL.hour() * 60 + RELOJ_GLOBAL.minute();
     bool esDia = (minutosActuales >= initDia && minutosActuales < finDia);
     float tempObjetivo = esDia ? tempDia : tempNoche;
 
@@ -36,7 +35,7 @@ void controlCalefaccion(){
         if (estatusResistencia) {
             digitalWrite(CALEFACTORA_PIN, RELAY_APAGADO);
             estatusResistencia = false;
-            tiempoUltimoCambioCalefaccion = tiempoActual; // Inicia un nuevo ciclo de descanso
+            tiempoUltimoCambioCalefaccion = TIEMPO_ACTUAL_MS; // Inicia un nuevo ciclo de descanso
             Serial.println("CONTROL TEMP: ¡EMERGENCIA! Temp maxima superada. Apagando calefaccion.");
         }
         return; // Salimos de la función para asegurar que permanezca apagada.
@@ -49,19 +48,19 @@ void controlCalefaccion(){
     if (estatusResistencia) {
         // --- CALEFACCIÓN ENCENDIDA: Comprobar si debe apagarse ---
         // Se apaga si se cumple el tiempo de encendido O si ya se alcanzó la temperatura objetivo.
-        if (tiempoActual - tiempoUltimoCambioCalefaccion >= TIEMPO_ENCENDIDO_CALEFACCION || tempPromedio > (tempObjetivo + tempHisteresis)) {
+        if (TIEMPO_ACTUAL_MS - tiempoUltimoCambioCalefaccion >= TIEMPO_ENCENDIDO_CALEFACCION || tempPromedio > (tempObjetivo + tempHisteresis)) {
             digitalWrite(CALEFACTORA_PIN, RELAY_APAGADO);
             estatusResistencia = false;
-            tiempoUltimoCambioCalefaccion = tiempoActual; // reiniciamos el ciclo de descanso para evitar encendido y apagado rápido de relé
+            tiempoUltimoCambioCalefaccion = TIEMPO_ACTUAL_MS; // reiniciamos el ciclo de descanso para evitar encendido y apagado rápido de relé
             Serial.println("CONTROL TEMP: Apagando calefaccion (ciclo/temp alcanzada).");
         }
     } else {
         // --- CALEFACCIÓN APAGADA: Comprobar si debe encenderse ---
         // Se enciende si la temperatura está por debajo del objetivo Y ha transcurrido el tiempo de descanso.
-        if (tempPromedio < (tempObjetivo - tempHisteresis) && tiempoActual - tiempoUltimoCambioCalefaccion >= TIEMPO_APAGADO_CALEFACCION) {
+        if (tempPromedio < (tempObjetivo - tempHisteresis) && TIEMPO_ACTUAL_MS - tiempoUltimoCambioCalefaccion >= TIEMPO_APAGADO_CALEFACCION) {
             digitalWrite(CALEFACTORA_PIN, RELAY_ENCENDIDO);
             estatusResistencia = true;
-            tiempoUltimoCambioCalefaccion = tiempoActual; // reiniciamos el ciclo de encendido para evitar encendido y apagado rápido de relé
+            tiempoUltimoCambioCalefaccion = TIEMPO_ACTUAL_MS; // reiniciamos el ciclo de encendido para evitar encendido y apagado rápido de relé
             Serial.println("CONTROL TEMP: Encendiendo calefaccion (temp baja y descanso cumplido).");
         }
     }

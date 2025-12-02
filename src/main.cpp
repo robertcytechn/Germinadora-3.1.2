@@ -15,7 +15,6 @@
 #include <CONTROL_VENTILACION_.h>
 #include <CONTROL_TEMPERATURA_.h>
 #include <MOSTRAR_PANTALLA_.h>
-#include <USB_LOOGER_.h>
 #include <CONTROL_HUMEDAD_.h>
 
 // =================================================================
@@ -37,6 +36,7 @@ void setup() {
     Serial.println("=====================================");
 
     Wire.begin();
+    Wire.setWireTimeout(3000, true);
 
     // Inicializar sensores y reloj RTC
     Serial.println("Inicializando sensores y reloj...");
@@ -54,9 +54,6 @@ void setup() {
     if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) { 
         Serial.println(F("ERROR: Fallo al inicializar la pantalla OLED."));
     }
-
-    // Inicializar el logger USB
-    setupLogger();
 
     // Configuración de pines
     pinMode(LEDS_ROJOS_PIN, OUTPUT);
@@ -79,11 +76,16 @@ void setup() {
 void loop() {
     // sigo vivo
     wdt_reset();
+    // usamos TIEMPO_REACCION_GLOBAL para evitar saturar i2c al inicio
+    TIEMPO_ACTUAL_MS = millis();
+    if (millis() - TIEMPO_ACTUAL_MS < TIEMPO_REACCION_GLOBAL) {
+        return;
+    }
+    RELOJ_GLOBAL = reloj.now();
     leerTemperaturaHumedad();
     controlLuces();
     controlVentilacion();
     controlCalefaccion();
     controlHumedad();
     mostrarPantalla();
-    handleLogging();
 }

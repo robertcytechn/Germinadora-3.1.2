@@ -21,8 +21,6 @@ void pulsarBotonHumidificador() {
 //  LÓGICA PRINCIPAL
 // =================================================================
 void controlHumedad() {
-    unsigned long tiempoActual = millis();
-
     // ============================================================
     // 1. ZONA DE SEGURIDAD Y RESINCRONIZACIÓN (Tu idea genial)
     // ============================================================
@@ -33,7 +31,7 @@ void controlHumedad() {
     if (humPromedio >= HUM_UMBRAL_DESINCRONIZACION) {
         // Solo actuamos si ha pasado un tiempo prudente desde el último intento de emergencia
         // (para dar tiempo a que la humedad baje y no estar prendiendo/apagando a lo loco)
-        if (tiempoActual - ultimoIntentoResync >= TIEMPO_ESPERA_RESYNC) {
+        if (TIEMPO_ACTUAL_MS - ultimoIntentoResync >= TIEMPO_ESPERA_RESYNC) {
             Serial.print("CONTROL HUM: ALERTA DE DESFASE. Humedad al ");
             Serial.print(humPromedio);
             Serial.println("%. Forzando APAGADO de humidificador.");
@@ -44,8 +42,8 @@ void controlHumedad() {
             estatusHumidificador = false; 
             
             // Actualizamos timers para que no vuelva a entrar aquí inmediatamente
-            ultimoIntentoResync = tiempoActual;
-            tiempoUltimoCambioHumedad = tiempoActual; 
+            ultimoIntentoResync = TIEMPO_ACTUAL_MS;
+            tiempoUltimoCambioHumedad = TIEMPO_ACTUAL_MS; 
         }
         return; // Salimos de la función. La seguridad es prioridad.
     }
@@ -55,7 +53,7 @@ void controlHumedad() {
     // ============================================================
     
     // Anti-Jitter (Tiempo de reacción normal)
-    if (tiempoActual - tiempoUltimoCambioHumedad < tiempoReaccionHumedad) {
+    if (TIEMPO_ACTUAL_MS - tiempoUltimoCambioHumedad < TIEMPO_ENCENDIDO_HUMIDIFICADOR) {
         return; 
     }
 
@@ -65,7 +63,7 @@ void controlHumedad() {
             Serial.println("CONTROL HUM: Viento fuerte (Rafaga). Apagando por eficiencia.");
             pulsarBotonHumidificador(); 
             estatusHumidificador = false;
-            tiempoUltimoCambioHumedad = tiempoActual;
+            tiempoUltimoCambioHumedad = TIEMPO_ACTUAL_MS;
         }
         return;
     }
@@ -83,7 +81,7 @@ void controlHumedad() {
             
             pulsarBotonHumidificador();
             estatusHumidificador = true;
-            tiempoUltimoCambioHumedad = tiempoActual;
+            tiempoUltimoCambioHumedad = TIEMPO_ACTUAL_MS;
         }
     }
     // APAGAR (Objetivo Alcanzado)
@@ -95,7 +93,7 @@ void controlHumedad() {
             
             pulsarBotonHumidificador();
             estatusHumidificador = false;
-            tiempoUltimoCambioHumedad = tiempoActual;
+            tiempoUltimoCambioHumedad = TIEMPO_ACTUAL_MS;
         }
     }
 }
