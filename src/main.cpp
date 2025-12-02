@@ -36,7 +36,7 @@ void setup() {
     Serial.println("=====================================");
 
     Wire.begin();
-    Wire.setWireTimeout(3000, true);
+    Wire.setWireTimeout(25000, true);
 
     // Inicializar sensores y reloj RTC
     Serial.println("Inicializando sensores y reloj...");
@@ -76,11 +76,14 @@ void setup() {
 void loop() {
     // sigo vivo
     wdt_reset();
-    // usamos TIEMPO_REACCION_GLOBAL para evitar saturar i2c al inicio
     TIEMPO_ACTUAL_MS = millis();
-    if (millis() - TIEMPO_ACTUAL_MS < TIEMPO_REACCION_GLOBAL) {
+
+    // usamos TIEMPO_REACCION_GLOBAL para evitar que la lógica principal se ejecute 
+    // inmediatamente al inicio, permitiendo que los sensores se estabilicen.
+    if (TIEMPO_ACTUAL_MS < TIEMPO_REACCION_GLOBAL) {
         return;
     }
+    
     RELOJ_GLOBAL = reloj.now();
     leerTemperaturaHumedad();
     controlLuces();

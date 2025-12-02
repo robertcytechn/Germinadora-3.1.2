@@ -16,9 +16,18 @@ const int RELAY_APAGADO = HIGH;
 // Configuración de humedad
 float humObjetivo = 75.0;                      // humedad objetivo en %
 float humHisteresis = 5.0;                     // margen de histéresis para evitar cambios frecuentes
-float humMaxSeguridad = 95.0;                  // humedad máxima de seguridad
+float humMaxSeguridad = 90.0;                  // humedad máxima de seguridad
 float humMinSeguridad = 55.0;                  // humedad mínima de seguridad
 const unsigned long TIEMPO_LECTURA_DHT = 5000; // tiempo entre lecturas del sensor DHT en milisegundos (5 segundos)
+static bool estatusHumidificador = false; 
+unsigned long tiempoUltimoCambioHumedad = 0;      
+const unsigned long TIEMPO_ENCENDIDO_HUMIDIFICADOR = 2 * 60000UL; // 2 minutos entre cambios normales
+const int DURACION_PULSO_BOTON = 150;             
+// --- VARIABLES PARA LA RESINCRONIZACIÓN (NUEVO) ---
+const float HUM_UMBRAL_DESINCRONIZACION = 93.0;   // Si pasa de esto, asumimos que se quedó pegado encendido
+unsigned long ultimoIntentoResync = 0;            // Para no estar pulsando a cada rato si la humedad baja lento
+const unsigned long TIEMPO_ESPERA_RESYNC = 5 * 60000UL; // Esperamos 5 min después de un pulso de emergencia antes de intentar otro
+
 
 // Configuración de iluminación
 int initDia = 7 * 60;                           // inicio del cilo del dia en minutos (7:00 AM)
@@ -60,17 +69,6 @@ int estadoVentExt = 0;                                          // estado actual
 bool estadoVentInt = false;                                     // estado actual de la ventilación interna: false=apagada, true=encendida
 const unsigned long TIEMPO_REACCION_VENTILACION = 30000UL;      // tiempo de reaccion de la ventilación en milisegundos (30 segundos)
 unsigned long ultimoCambioVentilacion = 0;                      // marca de tiempo del último cambio de ventilación
-
-// configuración de control de humedad
-static bool estatusHumidificador = false; 
-unsigned long tiempoUltimoCambioHumedad = 0;      
-const unsigned long TIEMPO_ENCENDIDO_HUMIDIFICADOR = 2 * 60000UL; // 2 minutos entre cambios normales
-const int DURACION_PULSO_BOTON = 500;             
-// --- VARIABLES PARA LA RESINCRONIZACIÓN (NUEVO) ---
-const float HUM_UMBRAL_DESINCRONIZACION = 93.0;   // Si pasa de esto, asumimos que se quedó pegado encendido
-unsigned long ultimoIntentoResync = 0;            // Para no estar pulsando a cada rato si la humedad baja lento
-const unsigned long TIEMPO_ESPERA_RESYNC = 5 * 60000UL; // Esperamos 5 min después de un pulso de emergencia antes de intentar otro
-
 
 
 // Tiempos

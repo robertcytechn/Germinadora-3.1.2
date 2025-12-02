@@ -22,7 +22,7 @@ void pulsarBotonHumidificador() {
 // =================================================================
 void controlHumedad() {
     // ============================================================
-    // 1. ZONA DE SEGURIDAD Y RESINCRONIZACIÓN (Tu idea genial)
+    // 1. ZONA DE SEGURIDAD Y RESINCRONIZACIÓN
     // ============================================================
     // Si la humedad es EXTREMADAMENTE ALTA (>93%), asumimos que el humidificador 
     // está encendido aunque el Arduino piense que está apagado (por un reinicio o fallo).
