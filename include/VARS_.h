@@ -96,4 +96,10 @@ float humedadMax = 0;
 bool alarmaActiva = false;
 int codigoAlarma = 0;
 
+// =================================================================
+//  MODO ANTIHONGOS (dejar asi por 2 - 3 dias para eliminar hongos)
+// =================================================================
+bool modoAntiHongos = true;  // Cambiar a true para activar modo de aniquilación de hongos
+
 #endif // VARS__H
+

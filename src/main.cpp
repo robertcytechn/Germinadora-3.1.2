@@ -71,6 +71,14 @@ void setup() {
 
     //watchdog por si acaso se cuelga el sistema - opcional
     wdt_enable(WDTO_8S); // habilitar el watchdog con un tiempo de 8 segundos
+
+    if (modoAntiHongos){
+        Serial.println("MODO ANTI-HONGOS ACTIVADO");
+        // modificamos variables globales para modo anti-hongos solo si está activado el modo anti-hongos
+        tempDia = 30.0; // ajustamos temperatura diurna a 30 grados
+        tempNoche = 30.0; // ajustamos temperatura nocturna a 30 grados
+        tempMaxSeguridad = 35.0; // ajustamos temperatura máxima de seguridad a 35 grados
+    }
 }
 
 void loop() {

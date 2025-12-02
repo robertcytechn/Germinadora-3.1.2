@@ -15,6 +15,18 @@ extern RTC_DS1307 reloj;
 
 
 void controlVentilacion(){
+    // Si el modo anti-hongos está activo, forzamos ventilación externa al 80% y apagamos la interna
+    if (modoAntiHongos) {
+        analogWrite(VENTILADOR_PIN, 204);  // 80% de 255 = 204
+        analogWrite(VENTINTER_PIN, PWM_INT_VENT_OFF);
+        static bool mensajeMostrado = false;
+        if (!mensajeMostrado) {
+            Serial.println("CONTROL VENT: Modo ANTI-HONGOS - Ventilacion externa al 80%, interna desactivada.");
+            mensajeMostrado = true;
+        }
+        return;
+    }
+
     // verificamos si ya paso el tiempo de reaccion para seguir con la funcion
     if (TIEMPO_ACTUAL_MS - ultimoCambioVentilacion < TIEMPO_REACCION_VENTILACION) {
         // No ha pasado suficiente tiempo desde el último cambio salimos de la función y no hacemos nada

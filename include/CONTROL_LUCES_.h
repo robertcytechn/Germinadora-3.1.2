@@ -14,6 +14,18 @@
 extern RTC_DS1307 reloj;
 
 void controlLuces(){
+    // Si el modo anti-hongos está activo, encendemos todas las luces al 100%
+    if (modoAntiHongos) {
+        potenciadeluces = 255;
+        analogWrite(LUCES_BLANCAS_PIN, 255);
+        digitalWrite(LEDS_ROJOS_PIN, RELAY_ENCENDIDO);
+        static bool mensajeMostrado = false;
+        if (!mensajeMostrado) {
+            Serial.println("CONTROL LUCES: Modo ANTI-HONGOS - Todas las luces al 100%.");
+            mensajeMostrado = true;
+        }
+        return;
+    }
 
     // comprobar si ha pasado el tiempo de reaccion desde el último cambio
     if (TIEMPO_ACTUAL_MS - ultimoCambio < TIEMPO_REACCION_LUCES) {

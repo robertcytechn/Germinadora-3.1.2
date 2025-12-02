@@ -12,6 +12,17 @@ static bool estatusHumidificador = false;
 static bool sistemaEstabilizado = false; 
 
 void controlHumedad() {
+    // Si el modo anti-hongos está activo, desactivamos completamente el humidificador
+    if (modoAntiHongos) {
+        if (estatusHumidificador || etapaHumidificador != ESTADO_HUM_MONITOREO) {
+            digitalWrite(HUMIDIFICADOR_PIN, RELAY_APAGADO);
+            estatusHumidificador = false;
+            etapaHumidificador = ESTADO_HUM_MONITOREO;
+            Serial.println("CONTROL HUM: Desactivado por modo ANTI-HONGOS.");
+        }
+        return;
+    }
+
     unsigned long ahora = TIEMPO_ACTUAL_MS; 
 
     // ============================================================
