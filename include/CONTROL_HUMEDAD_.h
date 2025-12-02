@@ -2,99 +2,130 @@
 #define CONTROL_HUMEDAD__H
 
 #include <Arduino.h>
-#include <RTClib.h>
 #include <VARS_.h>
 #include <PINS_.h>
 
-// =================================================================
-//  FUNCIÓN DE PULSO (El dedo fantasma)
-// =================================================================
-void pulsarBotonHumidificador() {
-    // Ajusta RELAY_ENCENDIDO / APAGADO según tu configuración en VARS_.h
-    // Si usas lógica inversa (módulo azul): LOW activa, HIGH apaga
-    digitalWrite(HUMIDIFICADOR_PIN, RELAY_ENCENDIDO); 
-    delay(DURACION_PULSO_BOTON);
-    digitalWrite(HUMIDIFICADOR_PIN, RELAY_APAGADO);
-}
+// Variable local de estado lógico
+static bool estatusHumidificador = false; 
 
-// =================================================================
-//  LÓGICA PRINCIPAL
-// =================================================================
+// Flag para saber si ya superamos el arranque
+static bool sistemaEstabilizado = false; 
+
 void controlHumedad() {
-    // ============================================================
-    // 1. ZONA DE SEGURIDAD Y RESINCRONIZACIÓN
-    // ============================================================
-    // Si la humedad es EXTREMADAMENTE ALTA (>93%), asumimos que el humidificador 
-    // está encendido aunque el Arduino piense que está apagado (por un reinicio o fallo).
-    // Mandamos un pulso para intentar apagarlo.
-    
-    if (humPromedio >= HUM_UMBRAL_DESINCRONIZACION) {
-        // Solo actuamos si ha pasado un tiempo prudente desde el último intento de emergencia
-        // (para dar tiempo a que la humedad baje y no estar prendiendo/apagando a lo loco)
-        if (TIEMPO_ACTUAL_MS - ultimoIntentoResync >= TIEMPO_ESPERA_RESYNC) {
-            Serial.print("CONTROL HUM: ALERTA DE DESFASE. Humedad al ");
-            Serial.print(humPromedio);
-            Serial.println("%. Forzando APAGADO de humidificador.");
-            
-            pulsarBotonHumidificador(); // ¡Click!
-            
-            // Forzamos la variable a FALSE, porque acabamos de intentar apagarlo
-            estatusHumidificador = false; 
-            
-            // Actualizamos timers para que no vuelva a entrar aquí inmediatamente
-            ultimoIntentoResync = TIEMPO_ACTUAL_MS;
-            tiempoUltimoCambioHumedad = TIEMPO_ACTUAL_MS; 
-        }
-        return; // Salimos de la función. La seguridad es prioridad.
-    }
+    unsigned long ahora = TIEMPO_ACTUAL_MS; 
 
     // ============================================================
-    // 2. PROTECCIONES NORMALES
+    // 🛡️ PROTECCIÓN DE ARRANQUE
     // ============================================================
-    
-    // Anti-Jitter (Tiempo de reacción normal)
-    if (TIEMPO_ACTUAL_MS - tiempoUltimoCambioHumedad < TIEMPO_ENCENDIDO_HUMIDIFICADOR) {
-        return; 
-    }
+    if (!sistemaEstabilizado) {
+        // 1. Esperar al menos 10 segundos desde el encendido para que el DHT lea bien
+        if (ahora < 10000UL) { 
+            return; // No hacemos nada, esperamos.
+        }
+        
+        // 2. Verificar que la humedad no sea 0 (Lectura inválida o sensor desconectado)
+        if (humPromedio == 0.0 || isnan(humPromedio)) {
+            return; // No confiamos en sensores vacíos.
+        }
 
-    // Protección Viento en Contra (Si hay ráfaga, no humidificar)
-    if (estadoVentExt == 2) {
-        if (estatusHumidificador) {
-            Serial.println("CONTROL HUM: Viento fuerte (Rafaga). Apagando por eficiencia.");
-            pulsarBotonHumidificador(); 
-            estatusHumidificador = false;
-            tiempoUltimoCambioHumedad = TIEMPO_ACTUAL_MS;
-        }
-        return;
+        // Si pasamos los filtros, marcamos el sistema como listo
+        sistemaEstabilizado = true;
+        Serial.println("CONTROL HUM: Sistema estabilizado. Iniciando logica automatica.");
     }
+    // ============================================================
 
-    // ============================================================
-    // 3. CONTROL NORMAL (Histéresis)
-    // ============================================================
-    
-    // ENCENDER (Humedad Baja)
-    if (humPromedio <= (humObjetivo - humHisteresis)) {
-        if (!estatusHumidificador) { // Solo si creemos que está apagado
-            Serial.print("CONTROL HUM: Humedad baja (");
-            Serial.print(humPromedio);
-            Serial.println("%). Encendiendo.");
+
+    // MÁQUINA DE ESTADOS FINITOS
+    switch (etapaHumidificador) {
+        
+        // ============================================================
+        // ESTADO 0: MONITOREO
+        // ============================================================
+        case ESTADO_HUM_MONITOREO:
             
-            pulsarBotonHumidificador();
-            estatusHumidificador = true;
-            tiempoUltimoCambioHumedad = TIEMPO_ACTUAL_MS;
-        }
-    }
-    // APAGAR (Objetivo Alcanzado)
-    else if (humPromedio >= humObjetivo) {
-        if (estatusHumidificador) { // Solo si creemos que está encendido
-            Serial.print("CONTROL HUM: Objetivo alcanzado (");
-            Serial.print(humPromedio);
-            Serial.println("%). Apagando.");
-            
-            pulsarBotonHumidificador();
-            estatusHumidificador = false;
-            tiempoUltimoCambioHumedad = TIEMPO_ACTUAL_MS;
-        }
+            // Lógica normal de encendido (< 40%)
+            if (humPromedio <= humTriggerNormal) {
+                Serial.print("CONTROL HUM: Humedad baja ("); Serial.print(humPromedio); 
+                Serial.println("%). Iniciando ciclo de 2 min.");
+                
+                digitalWrite(HUMIDIFICADOR_PIN, RELAY_ENCENDIDO); 
+                timerHumidificador = ahora;
+                etapaHumidificador = ESTADO_HUM_PULSANDO_ON;
+            }
+            // Lógica de seguridad (> 90%) - CON RESTRICCIÓN DE TIEMPO
+            // Solo activamos esta seguridad si el sistema lleva ya rato encendido (> 60 seg)
+            // para evitar que al arrancar en un día húmedo lo encendamos por error.
+            else if (humPromedio >= humMaxSeguridad && ahora > 60000UL) {
+                    Serial.println("CONTROL HUM: ALERTA >90% (Desfase detectado). Forzando apagado.");
+                    digitalWrite(HUMIDIFICADOR_PIN, RELAY_ENCENDIDO); 
+                    timerHumidificador = ahora;
+                    etapaHumidificador = ESTADO_HUM_PULSANDO_OFF; 
+            }
+            break;
+
+        // ============================================================
+        // ESTADO 1: PULSANDO PARA ENCENDER
+        // ============================================================
+        case ESTADO_HUM_PULSANDO_ON:
+            if (ahora - timerHumidificador >= DURACION_PULSO_BOTON) {
+                digitalWrite(HUMIDIFICADOR_PIN, RELAY_APAGADO); 
+                estatusHumidificador = true;
+                
+                Serial.println("CONTROL HUM: Encendido. Trabajando por 2 min obligatorios.");
+                timerHumidificador = ahora; 
+                etapaHumidificador = ESTADO_HUM_TRABAJANDO;
+            }
+            break;
+
+        // ============================================================
+        // ESTADO 2: TRABAJANDO (2 Minutos Obligatorios)
+        // ============================================================
+        case ESTADO_HUM_TRABAJANDO:
+            if (ahora - timerHumidificador >= TIEMPO_MIN_ENCENDIDO_HUM) {
+                Serial.println("CONTROL HUM: 2 minutos completados. Iniciando apagado.");
+                
+                digitalWrite(HUMIDIFICADOR_PIN, RELAY_ENCENDIDO); 
+                timerHumidificador = ahora;
+                etapaHumidificador = ESTADO_HUM_PULSANDO_OFF;
+            }
+            break;
+
+        // ============================================================
+        // ESTADO 3: PULSANDO PARA APAGAR
+        // ============================================================
+        case ESTADO_HUM_PULSANDO_OFF:
+            if (ahora - timerHumidificador >= DURACION_PULSO_BOTON) {
+                digitalWrite(HUMIDIFICADOR_PIN, RELAY_APAGADO); 
+                estatusHumidificador = false;
+                
+                Serial.println("CONTROL HUM: Apagado. Entrando en descanso de 10 min.");
+                timerHumidificador = ahora; 
+                etapaHumidificador = ESTADO_HUM_DESCANSO;
+            }
+            break;
+
+        // ============================================================
+        // ESTADO 4: DESCANSO (10 Minutos)
+        // ============================================================
+        case ESTADO_HUM_DESCANSO:
+            // Emergencia (< 30%) - Rompe el descanso
+            if (humPromedio <= humTriggerEmergencia && humPromedio > 0) { // Validamos >0
+                Serial.print("CONTROL HUM: ¡EMERGENCIA! Humedad critica ("); 
+                Serial.print(humPromedio);
+                Serial.println("%). Cancelando descanso y encendiendo.");
+                
+                digitalWrite(HUMIDIFICADOR_PIN, RELAY_ENCENDIDO); 
+                timerHumidificador = ahora;
+                etapaHumidificador = ESTADO_HUM_PULSANDO_ON;
+                return;
+            }
+
+            // Esperar fin del descanso
+            if (ahora - timerHumidificador >= TIEMPO_MIN_DESCANSO_HUM) {
+                Serial.println("CONTROL HUM: Descanso terminado. Volviendo a vigilancia.");
+                etapaHumidificador = ESTADO_HUM_MONITOREO;
+            }
+            break;
     }
 }
 

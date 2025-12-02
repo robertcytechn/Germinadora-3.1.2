@@ -60,7 +60,7 @@ void controlVentilacion(){
 
     // control de ventilacion externa segun ciclos: apagado -> basal -> rafaga -> descanso, 0 apagado 1 basal 2 rafaga
     // revisamos que la humedad promedio no baje del umbral minimo de seguridad antes de activar ventilacion externa
-    if (humPromedio <= humMinSeguridad) {
+    if (humPromedio <= humTriggerNormal) {
         analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
         estadoVentExt = 0; // reiniciamos el estado a apagado
         inicioCicloExt = TIEMPO_ACTUAL_MS; // reiniciamos el ciclo

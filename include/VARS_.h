@@ -13,20 +13,29 @@ const int RELAY_ENCENDIDO = LOW;
 const int RELAY_APAGADO = HIGH;
 
 
-// Configuración de humedad
-float humObjetivo = 75.0;                      // humedad objetivo en %
-float humHisteresis = 5.0;                     // margen de histéresis para evitar cambios frecuentes
-float humMaxSeguridad = 90.0;                  // humedad máxima de seguridad
-float humMinSeguridad = 55.0;                  // humedad mínima de seguridad
-const unsigned long TIEMPO_LECTURA_DHT = 5000; // tiempo entre lecturas del sensor DHT en milisegundos (5 segundos)
-static bool estatusHumidificador = false; 
-unsigned long tiempoUltimoCambioHumedad = 0;      
-const unsigned long TIEMPO_ENCENDIDO_HUMIDIFICADOR = 2 * 60000UL; // 2 minutos entre cambios normales
-const int DURACION_PULSO_BOTON = 150;             
-// --- VARIABLES PARA LA RESINCRONIZACIÓN (NUEVO) ---
-const float HUM_UMBRAL_DESINCRONIZACION = 93.0;   // Si pasa de esto, asumimos que se quedó pegado encendido
-unsigned long ultimoIntentoResync = 0;            // Para no estar pulsando a cada rato si la humedad baja lento
-const unsigned long TIEMPO_ESPERA_RESYNC = 5 * 60000UL; // Esperamos 5 min después de un pulso de emergencia antes de intentar otro
+// --- CONFIGURACIÓN DE UMBRALES DE HUMEDAD ---
+float humObjetivo = 70.0;           // (Referencia)
+float humTriggerNormal = 50.0;      // < 50% Enciende (si ya descansó)
+float humTriggerEmergencia = 30.0;  // < 30% Enciende AHORA (Ignora descanso)
+float humMaxSeguridad = 90.0;       // > 90% Apaga forzado (Seguridad)
+
+// --- CONFIGURACIÓN DE TIEMPOS (en milisegundos) ---
+const unsigned long TIEMPO_LECTURA_DHT = 2000;              // tiempo entre lecturas de sensores DHT11 (2 segundos)
+const unsigned long DURACION_PULSO_BOTON = 250;             // Tiempo del "dedo" (0.25 seg)
+const unsigned long TIEMPO_MIN_ENCENDIDO_HUM = 2 * 60000UL; // 2 Minutos OBLIGATORIOS encendido
+const unsigned long TIEMPO_MIN_DESCANSO_HUM = 10 * 60000UL; // 10 Minutos OBLIGATORIOS descanso
+
+// --- ESTADOS DE LA MÁQUINA (Lógica Interna) ---
+const int ESTADO_HUM_MONITOREO    = 0; // Vigilando (Apagado listo)
+const int ESTADO_HUM_PULSANDO_ON  = 1; // "Dedo" presionando para PRENDER
+const int ESTADO_HUM_TRABAJANDO   = 2; // Cumpliendo los 2 minutos obligatorios
+const int ESTADO_HUM_PULSANDO_OFF = 3; // "Dedo" presionando para APAGAR
+const int ESTADO_HUM_DESCANSO     = 4; // Cumpliendo los 10 minutos de enfriamiento
+
+// Variables de control
+static int etapaHumidificador = ESTADO_HUM_MONITOREO; 
+static unsigned long timerHumidificador = 0; // Cronómetro general del humidificador
+// Nota: estatusHumidificador se mantiene en CONTROL_HUMEDAD_.h o aquí según prefieras
 
 
 // Configuración de iluminación
