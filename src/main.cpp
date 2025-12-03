@@ -35,10 +35,10 @@ void setup() {
     Serial.println("\n\n=====================================");
     Serial.println("Iniciando sistema Germinadora 3.1.2");
     Serial.println("=====================================");
-
+    
     Wire.begin();
     Wire.setWireTimeout(25000, true);
-
+    
     // Inicializar sensores y reloj RTC
     Serial.println("Inicializando sensores y reloj...");
     dhtSuperior.begin();
@@ -50,12 +50,12 @@ void setup() {
     }
     // Ajustar la hora del reloj RTC al momento de la compilación - comentar después de la primera vez y volver a cargar el firmaware
     // reloj.adjust(DateTime(F(__DATE__), F(__TIME__)));
-
+    
     // Inicializar pantalla OLED
     if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) { 
         Serial.println(F("ERROR: Fallo al inicializar la pantalla OLED."));
     }
-
+    
     // Configuración de pines
     pinMode(LEDS_ROJOS_PIN, OUTPUT);
     digitalWrite(LEDS_ROJOS_PIN, HIGH);           // apagamos rele con logica inversa
@@ -65,14 +65,15 @@ void setup() {
     pinMode(VENTINTER_PIN, OUTPUT);
     pinMode(LUCES_BLANCAS_PIN, OUTPUT);
     pinMode(HUMIDIFICADOR_PIN, OUTPUT);
-    digitalWrite(HUMIDIFICADOR_PIN, RELAY_APAGADO); // Aseguramos que arranque "sin presionar"
-
-
+    digitalWrite(HUMIDIFICADOR_PIN, RELAY_APAGADO);         // apagamos rele con logica inversa
+    
+    setupMenu();
+    
     Serial.println("Inicializacion completada.");
-
+    
     //watchdog por si acaso se cuelga el sistema - opcional
     wdt_enable(WDTO_8S); // habilitar el watchdog con un tiempo de 8 segundos
-
+    
     if (modoAntiHongos){
         Serial.println("MODO ANTI-HONGOS ACTIVADO");
         // modificamos variables globales para modo anti-hongos solo si está activado el modo anti-hongos
@@ -85,11 +86,11 @@ void setup() {
 void loop() {
     wdt_reset(); // 1. Alimentar al perro guardián (Estoy vivo)
     TIEMPO_ACTUAL_MS = millis();
-
+    
     // 2. EL PORTERO DEL MENÚ
     // Verifica si el botón del encoder se está presionando
     verificarEntradaMenu();
-
+    
     if (menuActivo) {
         // ==========================================
         // MODO 1: MENÚ DE CONFIGURACIÓN (Bloqueante)
@@ -114,6 +115,7 @@ void loop() {
         }
         
         // A. Leer Hora (Una vez por ciclo)
+        Wire.begin(); // Reinicializar el bus I2C por si acaso
         RELOJ_GLOBAL = reloj.now();
         
         // B. Ejecutar Módulos de Control

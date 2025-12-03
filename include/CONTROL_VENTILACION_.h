@@ -11,7 +11,7 @@
 //  CONTROL DE VENTILACIÓN (Interna y Externa)
 // =================================================================
 
-extern RTC_DS1307 reloj;
+
 
 
 void controlVentilacion(){
@@ -34,6 +34,15 @@ void controlVentilacion(){
         return;
     }
     ultimoCambioVentilacion = TIEMPO_ACTUAL_MS;
+
+        // verificamos si es de noche y apagamos toda ventilacion externa
+    int tiempoActualMinutos = RELOJ_GLOBAL.hour() * 60 + RELOJ_GLOBAL.minute();
+    bool esDia = (tiempoActualMinutos >= initDia && tiempoActualMinutos < finDia);
+    if (!esDia) {
+        analogWrite(VENTILADOR_PIN, PWM_EXT_OFF);
+        Serial.println("CONTROL VENT: Es de noche, apagando ventilacion externa.");
+        return; 
+    }
 
     // verificamos la temperatura maxima no supere el umbral de seguridad
     // si es asi, ventilacion externa en modo rafaga y ventilacion interna al maximo

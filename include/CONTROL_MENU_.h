@@ -226,8 +226,8 @@ void dibujarEdicion() {
 // =================================================================
 
 void setupMenu() {
-    pinMode(ENC_CLK, INPUT);
-    pinMode(ENC_DT, INPUT);
+    pinMode(ENC_CLK, INPUT_PULLUP);
+    pinMode(ENC_DT, INPUT_PULLUP);
     pinMode(ENC_SW, INPUT_PULLUP);
     estadoCLK_Ultimo = digitalRead(ENC_CLK);
 }
@@ -348,7 +348,7 @@ void administrarMenuPantalla() {
 void verificarEntradaMenu() {
     if (digitalRead(ENC_SW) == LOW) {
         if (tiempoBotonPresionado == 0) tiempoBotonPresionado = millis();
-        else if (millis() - tiempoBotonPresionado > 2000) { 
+        else if (millis() - tiempoBotonPresionado > 2000) { // 2 segundos de presionado para abrir menú
             menuActivo = true;
             tiempoBotonPresionado = 0;
             while(digitalRead(ENC_SW) == LOW); 

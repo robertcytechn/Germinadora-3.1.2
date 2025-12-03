@@ -22,7 +22,7 @@ float humMaxSeguridad = 90.0;       // > 90% Apaga forzado (Seguridad)
 
 // --- CONFIGURACIÓN DE TIEMPOS (en milisegundos) ---
 const unsigned long TIEMPO_LECTURA_DHT = 2000;              // tiempo entre lecturas de sensores DHT11 (2 segundos)
-const unsigned long DURACION_PULSO_BOTON = 250;             // Tiempo del "dedo" (0.25 seg)
+const unsigned long DURACION_PULSO_BOTON = 500;              // Duración// Tiempo del "dedo" (0.5 seg)
 unsigned long TIEMPO_MIN_ENCENDIDO_HUM = 2 * 60000UL; // 2 Minutos OBLIGATORIOS encendido
 unsigned long TIEMPO_MIN_DESCANSO_HUM = 10 * 60000UL; // 10 Minutos OBLIGATORIOS descanso
 
@@ -100,7 +100,7 @@ int codigoAlarma = 0;
 // =================================================================
 //  MODO ANTIHONGOS (dejar asi por 2 - 3 dias para eliminar hongos)
 // =================================================================
-bool modoAntiHongos = true;  // Cambiar a true para activar modo de aniquilación de hongos
+bool modoAntiHongos = false;  // Cambiar a true para activar modo de aniquilación de hongos
 
 #endif // VARS__H
 
