@@ -31,10 +31,10 @@
 #define OLED_HEIGHT 64                  // alto del oled en píxeles
 
 
-// === PUSCH BUTTONS (Menú de Navegación) ===
-#define BTN_ENTER_PIN 25                // pin del botón Enter del menú
-#define BTN_UP_PIN 26                   // pin del botón Arriba del menú
-#define BTN_DOWN_PIN 27                 // pin del botón Abajo del menú
+// === ENCODER (Menú de Navegación) ===
+#define ENC_CLK 22                      // CLK del encoder
+#define ENC_DT  23                      // DT del encoder
+#define ENC_SW  24                      // SW del encoder
 
 
 // ======= PUSH BUTTONS TEST PERIFERICOS =======

@@ -17,13 +17,14 @@ const int RELAY_APAGADO = HIGH;
 float humObjetivo = 70.0;           // (Referencia)
 float humTriggerNormal = 50.0;      // < 50% Enciende (si ya descansó)
 float humTriggerEmergencia = 30.0;  // < 30% Enciende AHORA (Ignora descanso)
+float humHisteresis = 5.0;          // Histeresis para evitar cambios frecuentes
 float humMaxSeguridad = 90.0;       // > 90% Apaga forzado (Seguridad)
 
 // --- CONFIGURACIÓN DE TIEMPOS (en milisegundos) ---
 const unsigned long TIEMPO_LECTURA_DHT = 2000;              // tiempo entre lecturas de sensores DHT11 (2 segundos)
 const unsigned long DURACION_PULSO_BOTON = 250;             // Tiempo del "dedo" (0.25 seg)
-const unsigned long TIEMPO_MIN_ENCENDIDO_HUM = 2 * 60000UL; // 2 Minutos OBLIGATORIOS encendido
-const unsigned long TIEMPO_MIN_DESCANSO_HUM = 10 * 60000UL; // 10 Minutos OBLIGATORIOS descanso
+unsigned long TIEMPO_MIN_ENCENDIDO_HUM = 2 * 60000UL; // 2 Minutos OBLIGATORIOS encendido
+unsigned long TIEMPO_MIN_DESCANSO_HUM = 10 * 60000UL; // 10 Minutos OBLIGATORIOS descanso
 
 // --- ESTADOS DE LA MÁQUINA (Lógica Interna) ---
 const int ESTADO_HUM_MONITOREO    = 0; // Vigilando (Apagado listo)
@@ -55,18 +56,18 @@ float tempHisteresis = 1.0;                                         // margen de
 float tempMaxSeguridad = 28.0;                                      // temperatura máxima de seguridad
 float tempMinSeguridad = 10.0;                                      // temperatura mínima de seguridad  
 bool estatusResistencia = false;                                    // estado actual de la resistencia de calefacción
-const unsigned long TIEMPO_ENCENDIDO_CALEFACCION = 3 * 60000UL;     // 3 minutos de encendido continuo
-const unsigned long TIEMPO_APAGADO_CALEFACCION = 5 * 60000UL;       // 5 minutos de descanso
+unsigned long TIEMPO_ENCENDIDO_CALEFACCION = 3 * 60000UL;     // 3 minutos de encendido continuo
+unsigned long TIEMPO_APAGADO_CALEFACCION = 5 * 60000UL;       // 5 minutos de descanso
 unsigned long tiempoUltimoCambioCalefaccion = 0;                    // marca de tiempo del último cambio de la calefacción
 const unsigned long TIEMPO_REACCION_CALEFACCION = 30000UL;          // tiempo de reaccion de la calefacción en milisegundos (30 segundos)
 
 // configuración de ventilación externa e interna
-const unsigned long T_VENT_INT_ON = 3 * 60000UL;                // 3 minutos de ventilación interna encendida
-const unsigned long T_VENT_INT_OFF = 12 * 60000UL;              // 12 minutos de ventilación interna apagada
-const unsigned long T_EXT_BASAL = 30 * 60000UL;                 // 30 minutos de ventilación externa basal
-const unsigned long T_EXT_RAFAGA = 5 * 60000UL;                 // 5 minutos de ventilación externa en ráfaga
-const unsigned long T_EXT_DESCANSO = 25 * 60000UL;              // 25 minutos de descanso entre ciclos de ventilación externa
-const int PWM_EXT_BASAL = 25;                                   // potencia basal de ventilación externa
+unsigned long T_VENT_INT_ON = 3 * 60000UL;                // 3 minutos de ventilación interna encendida
+unsigned long T_VENT_INT_OFF = 12 * 60000UL;              // 12 minutos de ventilación interna apagada
+unsigned long T_EXT_BASAL = 30 * 60000UL;                 // 30 minutos de ventilación externa basal
+unsigned long T_EXT_RAFAGA = 5 * 60000UL;                 // 5 minutos de ventilación externa en ráfaga
+unsigned long T_EXT_DESCANSO = 25 * 60000UL;              // 25 minutos de descanso entre ciclos de ventilación externa
+int PWM_EXT_BASAL = 25;                                   // potencia basal de ventilación externa
 const int PWM_EXT_RAFAGA = 255;                                 // potencia máxima de ventilación externa en ráfaga
 const int PWM_EXT_OFF = 0;                                      // ventilación externa apagada  
 const int PWM_INT_VENT_MAX = 255;                               // ventilación interna al máximo

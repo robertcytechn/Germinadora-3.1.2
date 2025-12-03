@@ -16,6 +16,7 @@
 #include <CONTROL_TEMPERATURA_.h>
 #include <MOSTRAR_PANTALLA_.h>
 #include <CONTROL_HUMEDAD_.h>
+#include <CONTROL_MENU_.h>
 
 // =================================================================
 //  OBJETOS GLOBALES
@@ -82,21 +83,47 @@ void setup() {
 }
 
 void loop() {
-    // sigo vivo
-    wdt_reset();
+    wdt_reset(); // 1. Alimentar al perro guardián (Estoy vivo)
     TIEMPO_ACTUAL_MS = millis();
 
-    // usamos TIEMPO_REACCION_GLOBAL para evitar que la lógica principal se ejecute 
-    // inmediatamente al inicio, permitiendo que los sensores se estabilicen.
-    if (TIEMPO_ACTUAL_MS < TIEMPO_REACCION_GLOBAL) {
-        return;
+    // 2. EL PORTERO DEL MENÚ
+    // Verifica si el botón del encoder se está presionando
+    verificarEntradaMenu();
+
+    if (menuActivo) {
+        // ==========================================
+        // MODO 1: MENÚ DE CONFIGURACIÓN (Bloqueante)
+        // ==========================================
+        // Si entramos aquí, el resto del código se DETIENE.
+        // La función administra la pantalla y los cambios de variables.
+        
+        administrarMenuPantalla(); 
+        
+        // Al salir del menú:
+        display.clearDisplay(); // Limpiamos residuos visuales
+        RELOJ_GLOBAL = reloj.now(); // Actualizamos hora inmediatamente
+    } 
+    else {
+        // ==========================================
+        // MODO 2: CONTROL AUTOMÁTICO (Normal)
+        // ==========================================
+        
+        // Protección de arranque: Esperar unos ms para que sensores estabilicen
+        if (TIEMPO_ACTUAL_MS < TIEMPO_REACCION_GLOBAL) {
+            return;
+        }
+        
+        // A. Leer Hora (Una vez por ciclo)
+        RELOJ_GLOBAL = reloj.now();
+        
+        // B. Ejecutar Módulos de Control
+        leerTemperaturaHumedad();
+        controlLuces();
+        controlVentilacion();
+        controlCalefaccion();
+        controlHumedad();
+        
+        // C. Interfaz de Usuario
+        mostrarPantalla();
     }
-    
-    RELOJ_GLOBAL = reloj.now();
-    leerTemperaturaHumedad();
-    controlLuces();
-    controlVentilacion();
-    controlCalefaccion();
-    controlHumedad();
-    mostrarPantalla();
 }
